@@ -77,12 +77,12 @@ def create_Assignment(connection, assignment_id, module_id, assignment_descripti
     connection.commit()
     print("Assignment created successfully.")
 
-def create_Submission(connection, submission_id, student_id, assignment_id, submission_date, result, feedback):
+def create_Submission(connection, submission_id, student_id, assignment_id, submission_date, result_id, submission_content):
     cursor = connection.cursor
     cursor.execute("""
         INSERT INTO Submissions(submission_id, student_id, assignment_id, submission_date, result, feedback)
         VALUES (?, ?, ?, ?, ?, ?)
-    """, (submission_id, student_id, assignment_id, submission_date, result, feedback))
+    """, (submission_id, student_id, assignment_id, submission_date, result_id, submission_content))
     connection.commit()
     print("Submission created successfully.")
 
@@ -153,13 +153,13 @@ def update_assignment(connection, assignment_id, module_id, assignment_descripti
     connection.commit()
     print("Assignment updated successfully.")
 
-def update_submission(connection, submission_id, student_id, assignment_id, submission_date, result, feedback):
+def update_submission(connection, submission_id, student_id, assignment_id, submission_date, result_id, submission_content):
     cursor = connection.cursor()
     cursor.execute("""
         UPDATE Submissions
         SET student_id = ?, assignment_id = ?, submission_date = ?, result = ?, feedback = ?
         WHERE submission_id = ?
-    """, (student_id, assignment_id, submission_date, result, feedback, submission_id))
+    """, (student_id, assignment_id, submission_date, result_id, submission_content, submission_id))
     connection.commit()
     print("Submission updated successfully.")
 
@@ -224,6 +224,15 @@ def add_assignment_to_module(connection, module_id, assignment_id):
     connection.commit()
     print("Assignment added to module successfully.")
 
+def add_test_to_assignment (connection, assignment_id, test_id):
+    cursor = connection.cursor()
+    cursor.execute("""
+        INSERT INTO AssignmentTests (assignment_id, test_id)
+        VALUES (?, ?)
+    """, (assignment_id, test_id))
+    connection.commit()
+    print("Assignment added to module successfully.")
+
 # READ for relational tables
 def get_teacher_modules(connection, teacher_id):
     cursor = connection.cursor()
@@ -244,6 +253,13 @@ def get_module_assignments(connection, module_id):
     cursor.execute("""
         SELECT assignment_id FROM ModuleAssignments WHERE module_id = ?
     """, (module_id,))
+    return cursor.fetchall()
+
+def get_assignment_tests (connection, assignment_id):
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT test_id FROM AssignmentTests WHERE assignment_id = ?
+    """, (assignment_id,))
     return cursor.fetchall()
 
 # DELETE for relational tables
@@ -268,5 +284,13 @@ def remove_assignment_from_module(connection, module_id, assignment_id):
     cursor.execute("""
         DELETE FROM ModuleAssignments WHERE module_id = ? AND assignment_id = ?
     """, (module_id, assignment_id))
+    connection.commit()
+    print("Assignment removed from module successfully.")
+
+def remove_test_from_assignment (connection, assignment_id, test_id):
+    cursor = connection.cursor()
+    cursor.execute("""
+        DELETE FROM AssignmentTests WHERE assignment_id = ? AND test_id = ?
+    """, (assignment_id, test_id))
     connection.commit()
     print("Assignment removed from module successfully.")
