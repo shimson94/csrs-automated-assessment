@@ -86,6 +86,16 @@ def create_Submission(connection, submission_id, student_id, assignment_id, subm
     connection.commit()
     print("Submission created successfully.")
 
+def create_results(connection, submission_id, test_id, actual_output, passed, feedback):
+    cursor = connection.cursor()
+    cursor.execute("""
+        INSERT INTO Results (submission_id, test_id, actual_output, passed, feedback)
+        VALUES (?, ?, ?, ?, ?)
+    """, (submission_id, test_id, actual_output, passed, feedback))
+    connection.commit()
+    print("Test result recorded successfully.")
+
+
 # READ
 def get_students(connection):
     cursor = connection.cursor()
@@ -111,6 +121,24 @@ def get_submissions(connection):
     cursor = connection.cursor()
     cursor.execute("SELECT * FROM Submissions")
     return cursor.fetchall()
+
+def get_test_cases(connection, assignment_id):
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT test_id, input, expected_output, timeout_seconds 
+        FROM AssignmentTests 
+        WHERE assignment_id = ?
+    """, (assignment_id,))
+    return cursor.fetchall()
+
+def get_assignment_id_for_submission (connection, submission_id):
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT assignment_id FROM Submissions WHERE submission_id = ?
+    """, (submission_id,))
+    result = cursor.fetchone()
+    return result[0] if result else None
+
 
 # UPDATE
 def update_student(connection, student_id, first_name, surname):
@@ -162,6 +190,17 @@ def update_submission(connection, submission_id, student_id, assignment_id, subm
     """, (student_id, assignment_id, submission_date, result_id, submission_content, submission_id))
     connection.commit()
     print("Submission updated successfully.")
+
+def update_submission_score(connection, submission_id, score, feedback):
+    """Update the result and feedback for a submission."""
+    cursor = connection.cursor()
+    cursor.execute("""
+        UPDATE Submissions
+        SET result = ?, feedback = ?
+        WHERE submission_id = ?
+    """, (score, feedback, submission_id))
+    connection.commit()
+    print(f"Submission {submission_id} updated with score: {score}%")
 
 
 # DELETE
