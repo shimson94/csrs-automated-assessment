@@ -17,6 +17,10 @@
 body {
   color: var(--foreground);
   background: var(--background);
+<<<<<<< HEAD
   font-family: GeistVF, Helvetica, sans-serif;
+=======
+  font-family: Arial, Helvetica, sans-serif;
+>>>>>>> 0d3f037 (Populate dashboard and add pages for assessments, marking-suite and submissions)
   padding: 1rem;
 }
