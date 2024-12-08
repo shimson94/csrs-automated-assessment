@@ -1,9 +1,9 @@
 import React from 'react'
 
-const markingDashboard = () => {
+const AssessmentsPage = () => {
   return (
     <div>page</div>
   )
 }
 
-export default markingDashboard
+export default AssessmentsPage
