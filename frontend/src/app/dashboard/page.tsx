@@ -5,50 +5,50 @@ import { useState } from 'react'
 import Link from 'next/link'
 import ActivityCard, { Activity } from '../../components/ActivityCard'
 
-// const recentActivities = [
-//   {
-//     id: 1,
-//     type: 'submission',
-//     time: '2 minutes ago',
-//     title: 'New submission: Assignment 2',
-//     description: 'by John Smith'
-//   },
-//   {
-//     id: 2,
-//     type: 'grading',
-//     time: '15 minutes ago',
-//     title: 'Grading completed: Lab 1',
-//     description: '25 submissions processed'
-//   },
-//   {
-//     id: 3,
-//     type: 'assignment',
-//     time: '1 hour ago',
-//     title: 'New assignment published',
-//     description: 'Assignment 3: Data Structures'
-//   },
-//   {
-//     id: 4,
-//     type: 'assignment',
-//     time: '1 hour ago',
-//     title: 'New assignment published',
-//     description: 'Assignment 3: Data Structures'
-//   },
-//   {
-//     id: 5,
-//     type: 'assignment',
-//     time: '1 hour ago',
-//     title: 'New assignment published',
-//     description: 'Assignment 3: Data Structures'
-//   },
-//   {
-//     id: 6,
-//     type: 'assignment',
-//     time: '1 hour ago',
-//     title: 'New assignment published',
-//     description: 'Assignment 3: Data Structures'
-//   }
-// ];
+const recentActivities: Activity[] = [
+  {
+    id: 1,
+    type: 'submission',
+    time: '2 minutes ago',
+    title: 'New submission: Assignment 2',
+    description: 'by John Smith'
+  },
+  {
+    id: 2,
+    type: 'grading',
+    time: '15 minutes ago',
+    title: 'Grading completed: Lab 1',
+    description: '25 submissions processed'
+  },
+  {
+    id: 3,
+    type: 'assignment',
+    time: '1 hour ago',
+    title: 'New assignment published',
+    description: 'Assignment 3: Data Structures'
+  },
+  {
+    id: 4,
+    type: 'assignment',
+    time: '1 hour ago',
+    title: 'New assignment published',
+    description: 'Assignment 3: Data Structures'
+  },
+  {
+    id: 5,
+    type: 'assignment',
+    time: '1 hour ago',
+    title: 'New assignment published',
+    description: 'Assignment 3: Data Structures'
+  },
+  {
+    id: 6,
+    type: 'assignment',
+    time: '1 hour ago',
+    title: 'New assignment published',
+    description: 'Assignment 3: Data Structures'
+  }
+];
 
 export default function Dashboard() {
   const [currentTab, setCurrentTab] = useState('home')
@@ -129,14 +129,19 @@ export default function Dashboard() {
       
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Recent Activities */}
-          <div className="lg:col-span-2 bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-medium mb-4">Recent Activities</h2>
-          <div className="space-y-4">
-            {recentActivities.map((activity) => (
+            <div className="lg:col-span-2 bg-white shadow rounded-lg p-6">
+            <h2 className="text-lg font-medium mb-4 flex justify-between items-center">
+            Recent Activities
+            <Link href="/dashboard/recents" className="text-blue-600 hover:underline text-sm">
+              View all
+            </Link>
+            </h2>
+            <div className="space-y-4">
+            {recentActivities.slice(0, 5).map((activity) => (
               <ActivityCard key={activity.id} activity={activity} />
             ))}
+            </div>
           </div>
-        </div>
       
           {/* Priority Tasks */}
           <div className="bg-white shadow rounded-lg p-6">
