@@ -1,8 +1,17 @@
+"use client"
+
+import Navbar from '@/components/Navbar'
 import React from 'react'
+import { useState } from 'react'
 
 const markingDashboard = () => {
+  const [currentTab, setCurrentTab] = useState('home')
   return (
-    <div>page</div>
+    <div className="min-h-screen bg-gray-100">
+    {/* Navbar */}
+    <Navbar currentTab={currentTab} setCurrentTab={setCurrentTab} />
+
+    </div>
   )
 }
 
