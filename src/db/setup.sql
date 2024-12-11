@@ -28,8 +28,8 @@ CREATE TABLE IF NOT EXISTS Submissions (
     student_id INTEGER NOT NULL,
     assignment_id INTEGER NOT NULL,
     submission_date DATE NOT NULL,
-    result_id INTEGER ,
-    submission_content TEXT NOT NULL,
+    result_id INTEGER,
+    submission_file BLOB,
     FOREIGN KEY (student_id) REFERENCES Students (student_id),
     FOREIGN KEY (assignment_id) REFERENCES Assignments (assignment_id),
     FOREIGN KEY (result_id) REFERENCES Results (result_id)
