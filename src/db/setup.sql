@@ -18,9 +18,11 @@ CREATE TABLE IF NOT EXISTS Modules (
 CREATE TABLE IF NOT EXISTS Assignments (
     assignment_id INTEGER PRIMARY KEY AUTOINCREMENT,
     assignment_description TEXT NOT NULL,
+    test_id INTEGER,
     rubric TEXT NOT NULL,
     threshold REAL NOT NULL,
     due_date DATE NOT NULL
+    FOREIGN KEY (rest_id) REFERENCES TESTS (test_id)
 );
 
 CREATE TABLE IF NOT EXISTS Submissions (
@@ -45,19 +47,10 @@ CREATE TABLE IF NOT EXISTS Results (
 
 CREATE TABLE IF NOT EXISTS Tests (
     test_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    test_function TEXT NOT NULL,
+    test_file BLOB,
     input TEXT NOT NULL,
     expected_output TEXT NOT NULL,
     timeout_seconds INTEGER DEFAULT 5
-);
-
--- Relationship table: Many-to-many between Assignment and Tests they contain
-CREATE TABLE IF NOT EXISTS AssignmentTests (
-    assignment_id INTEGER NOT NULL,
-    test_id INTEGER NOT NULL,
-    PRIMARY KEY (assignment_id, test_id),
-    FOREIGN KEY (assignment_id) REFERENCES Assignments (assignment_id),
-    FOREIGN KEY (test_id) REFERENCES Tests (test_id)
 );
 
 -- Relationship table: Many-to-many between Teachers and Modules they teach

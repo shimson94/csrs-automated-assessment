@@ -68,12 +68,12 @@ def create_module(connection, module_id, module_name):
     connection.commit()
     print("Module created successfully.")
 
-def create_Assignment(connection, assignment_id, assignment_description, rubric, threshold, due_date):
+def create_Assignment(connection, assignment_id, assignment_description, test_id, rubric, threshold, due_date):
     cursor = connection.cursor()
     cursor.execute("""
-        INSERT INTO Assignments (assignment_id, assignment_description, rubric, threshold, due_date)
-        VALUES (?, ?, ?, ?, ?)
-    """, (assignment_id, assignment_description, rubric, threshold, due_date))
+        INSERT INTO Assignments (assignment_id, assignment_description, test_id, rubric, threshold, due_date)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (assignment_id, assignment_description, test_id, rubric, threshold, due_date))
     connection.commit()
     print("Assignment created successfully.")
 
@@ -145,10 +145,10 @@ def get_results(connection):
     cursor.execute("SELECT * FROM Results")
     return cursor.fetchall()
 
-def get_test_cases(connection, assignment_id):
+def get_test_case(connection, assignment_id):
     cursor = connection.cursor()
     cursor.execute("""
-        SELECT test_id, input, expected_output, timeout_seconds 
+        SELECT test_id, test_file, input, expected_output, timeout_seconds 
         FROM AssignmentTests 
         WHERE assignment_id = ?
     """, (assignment_id,))
@@ -162,11 +162,35 @@ def get_assignment_id_for_submission (connection, submission_id):
     result = cursor.fetchone()
     return result[0] if result else None
 
-def get_submission_file(connection, submission_id):
+def get_submission_blob(connection, submission_id):
+    """
+    Retrieve the submisison_file blob associated with a given submission_id.
+
+    Returns:
+        bytes: The submission_file blob if found, None otherwise.
+    """
     cursor = connection.cursor()
-    cursor.execute("SELECT submission_content FROM Submissions WHERE submission_id = ?", (submission_id,))
+    cursor.execute("SELECT submission_file FROM Submissions WHERE submission_id = ?", (submission_id,))
     file_data = cursor.fetchone()
     return file_data[0] if file_data else None
+
+def get_test_blob(connection, assignment_id):
+    """
+    Fetches the test_file blob for a given assignment_id.
+    
+    Returns:
+        Bytes: The test_file blob if found, None otherwise.
+    """
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT t.test_file
+        FROM Assignments a
+        JOIN Tests t ON a.test_id = t.test_id
+        WHERE a.assignment_id = ?
+    """, (assignment_id,))
+    
+    file_data = cursor.fetchone()
+    return file_data[0] if file_data else None 
 
 # UPDATE
 def update_student(connection, student_id, first_name, surname):
@@ -199,13 +223,13 @@ def update_module(connection, module_id, module_name):
     connection.commit()
     print("Module updated successfully.")
 
-def update_assignment(connection, assignment_id, assignment_description, rubric, threshold, due_date):
+def update_assignment(connection, assignment_id, assignment_description, test_id, rubric, threshold, due_date):
     cursor = connection.cursor()
     cursor.execute("""
         UPDATE Assignments
-        SET  assignment_description = ?, rubric = ?, threshold = ?, due_date = ?
+        SET  assignment_description = ?, test_id = ?, rubric = ?, threshold = ?, due_date = ?
         WHERE assignment_id = ?
-    """, (assignment_description, rubric, threshold, due_date, assignment_id))
+    """, (assignment_description, test_id, rubric, threshold, due_date, assignment_id))
     connection.commit()
     print("Assignment updated successfully.")
 
@@ -296,13 +320,13 @@ def add_assignment_to_module(connection, module_id, assignment_id):
     print("Assignment added to module successfully.")
 
 # Create new test then adds to assignment
-def add_test_to_assignment(connection, assignment_id, test_id, test_function, input, expected_output, timeout_seconds):
+def add_test_to_assignment(connection, assignment_id, test_id, test_blob, input, expected_output, timeout_seconds):
     cursor = connection.cursor()
         
     cursor.execute("""
         INSERT INTO Tests (test_id, test_function, input, expected_output, timeout_seconds)
         VALUES (?, ?, ?, ?, ?)
-    """, (test_id, test_function, input, expected_output, timeout_seconds))
+    """, (test_id, test_blob, input, expected_output, timeout_seconds))
         
     cursor.execute("""
         INSERT INTO AssignmentTests (assignment_id, test_id)
@@ -436,18 +460,62 @@ def add_file_to_submission(db_path, submission_id, file_path):
     finally:
         connection.close()
 
+def add_file_to_test(db_path, test_id, file_path):
+    """
+    Converts a file to BLOB and adds it to the specified submission in the database.
+
+    Parameters:
+        db_path (str): Path to the SQLite database file.
+        submission_id (int): The submission ID where the file should be added.
+        file_path (str): The path to the file to be added to the submission.
+    """
+    blob_data = file_to_blob(file_path)
+    if blob_data is None:
+        print("No valid file data to add.")
+        return
+
+    connection = sqlite3.connect(db_path)
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute("SELECT test_id FROM Tests WHERE test_id = ?", (test_id,))
+        if cursor.fetchone() is None:
+            print(f"Error: No test found with ID {test_id}")
+            return
+
+        # update submission content
+        cursor.execute("""
+            UPDATE Tests
+            SET test_blob = ?
+            WHERE test_id = ?;
+        """, (blob_data, test_id))
+        
+        connection.commit()
+        print(f"File successfully added to test {test_id}.")
+
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+    finally:
+        connection.close()
+
+
+def save_blob_to_file(connection, file_path, blob):
+    try:
+        if blob:
+            with open(file_path, 'wb') as file:
+                file.write(blob[0])
+            print("File has been saved successfully.")
+            return file_path
+        else:
+            print("No file found for the given submission ID.")
+    except Exception as e:
+        print(f"Error: {e}")
 
 def save_submission_file(connection, file_path, submission_id):
-        """Saves submission file from database into a file and returns the path to it."""
-        try:
-            file_data = get_submission_file(connection, submission_id)
-
-            if file_data:
-                with open(file_path, 'wb') as file:
-                    file.write(file_data[0])
-                print("File has been saved successfully.")
-                return file_path
-            else:
-                print("No file found for the given submission ID.")
-        except Exception as e:
-            print(f"Error: {e}")
+    """Saves the test file from the database into file_path."""
+    blob = get_submission_blob(connection, submission_id)
+    save_blob_to_file(connection, file_path, blob)
+        
+def save_test_file(connection, file_path, assignment_id):
+    blob = get_test_blob(connection, assignment_id)
+    save_blob_to_file(connection, file_path, blob)
