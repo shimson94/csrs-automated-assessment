@@ -5,3 +5,5 @@ Backend: [Flask](https://flask.palletsprojects.com/en/stable/)<br />
 Frontend: React<br />
 
 ## Design
+Initial high level system design
+![image](https://github.com/user-attachments/assets/6cbc2086-60fe-47e4-ae61-758e78076dd8)
