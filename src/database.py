@@ -422,7 +422,7 @@ def file_to_blob(file_path):
         return None
         
 
-def add_file_to_submission(db_path, submission_id, file_path):
+def add_file_to_submission(connection, submission_id, file_path):
     """
     Converts a file to BLOB and adds it to the specified submission in the database.
 
@@ -436,9 +436,7 @@ def add_file_to_submission(db_path, submission_id, file_path):
         print("No valid file data to add.")
         return
 
-    connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
-
     try:
         cursor.execute("SELECT submission_id FROM Submissions WHERE submission_id = ?", (submission_id,))
         if cursor.fetchone() is None:
@@ -460,7 +458,7 @@ def add_file_to_submission(db_path, submission_id, file_path):
     finally:
         connection.close()
 
-def add_file_to_test(db_path, test_id, file_path):
+def add_file_to_test(connection, test_id, file_path):
     """
     Converts a file to BLOB and adds it to the specified submission in the database.
 
@@ -474,7 +472,6 @@ def add_file_to_test(db_path, test_id, file_path):
         print("No valid file data to add.")
         return
 
-    connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
 
     try:
@@ -499,7 +496,7 @@ def add_file_to_test(db_path, test_id, file_path):
         connection.close()
 
 
-def save_blob_to_file(connection, file_path, blob):
+def save_blob_to_file(file_path, blob):
     try:
         if blob:
             with open(file_path, 'wb') as file:
