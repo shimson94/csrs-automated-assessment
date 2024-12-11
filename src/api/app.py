@@ -1,6 +1,11 @@
+import sys
+from pathlib import Path
+
+# Add the root directory of the project to the Python path
+
 from flask import Flask
 from flask_cors import CORS
-from src.api.routes import api_blueprint
+from routes import api_blueprint
 
 app = Flask(__name__)
 CORS(app)  # Enable Cross-Origin Resource Sharing for frontend-backend communication
