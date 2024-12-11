@@ -58,7 +58,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-100">
       <Navbar currentTab={currentTab} setCurrentTab={setCurrentTab} />
 
-      <main className="max-w-7xl mx-auto py-6 px-4">
+      <main className="pt-16 max-w-7xl mx-auto py-6 px-4">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
         
         {/* Quick Stats Row */}
