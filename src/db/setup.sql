@@ -17,12 +17,10 @@ CREATE TABLE IF NOT EXISTS Modules (
 
 CREATE TABLE IF NOT EXISTS Assignments (
     assignment_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    module_id INTEGER NOT NULL,
     assignment_description TEXT NOT NULL,
     rubric TEXT NOT NULL,
     threshold REAL NOT NULL,
-    due_date DATE NOT NULL,
-    FOREIGN KEY (module_id) REFERENCES Modules (module_id)
+    due_date DATE NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS Submissions (
@@ -30,7 +28,7 @@ CREATE TABLE IF NOT EXISTS Submissions (
     student_id INTEGER NOT NULL,
     assignment_id INTEGER NOT NULL,
     submission_date DATE NOT NULL,
-    result_id INTEGER NOT NULL,
+    result_id INTEGER ,
     submission_content TEXT NOT NULL,
     FOREIGN KEY (student_id) REFERENCES Students (student_id),
     FOREIGN KEY (assignment_id) REFERENCES Assignments (assignment_id),
