@@ -5,8 +5,7 @@ import Navbar from '@/components/Navbar'
 import { Input } from '@/components/MarkingInput'
 import { Button } from '@/components/Button'
 import { FaSearch, FaSort } from 'react-icons/fa'
-import DatePicker from 'react-datepicker/dist/react-datepicker'
-import 'react-datepicker/dist/react-datepicker.css'
+import DatePicker from 'react-datepicker'
 import { AssignmentCard } from '@/components/AssignmentCard'
 
 interface Assignment {
