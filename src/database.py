@@ -1,16 +1,18 @@
 import sqlite3
+import os
+import stat
 
-DB_FILE = "src/db/prototype.db"
+#DB_FILE = "src/db/prototype.db"
 SQL_FILE = "src/db/setup.sql"
 
 # Remember to close connection
-def connect_database():
-    return sqlite3.connect(DB_FILE)
+def connect_database(db_file):
+    return sqlite3.connect(db_file)
 
 # Setup Database
-def setup_database():
-    connection = sqlite3.connect(DB_FILE)
-    cursor = connection.cursor
+def setup_database(db_file):
+    connection = sqlite3.connect(db_file)
+    cursor = connection.cursor()
 
     with open(SQL_FILE, "r") as sql_file:
         schema = sql_file.read()
@@ -20,6 +22,11 @@ def setup_database():
     connection.commit()
     connection.close()
     print('Database setup completed using setup.sql.')
+
+def print_tables(connection):
+    connection.cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    tables = connection.cursor.fetchall()
+    print(tables)  # This will list all tables in the database
 
 
 # Checks whether database is setup already
@@ -78,12 +85,12 @@ def create_Assignment(connection, assignment_id, assignment_description, test_id
     print("Assignment created successfully.")
 
 # raw_submission_file can be NULL and can be later added using add_file_to_submission()
-def create_Submission(connection, submission_id, student_id, assignment_id, result_id, raw_submission_file):
-    cursor = connection.cursor
+def create_Submission(connection, submission_id, student_id, assignment_id, result_id, raw_submission_file, submission_date):
+    cursor = connection.cursor()
     cursor.execute("""
-        INSERT INTO Submissions(submission_id, student_id, assignment_id, result_id, submission_file)
+        INSERT INTO Submissions(submission_id, student_id, assignment_id, result_id, submission_file, submission_date)
         VALUES (?, ?, ?, ?, ?, ?)
-    """, (submission_id, student_id, assignment_id, result_id, raw_submission_file))
+    """, (submission_id, student_id, assignment_id, result_id, raw_submission_file, submission_date))
     connection.commit()
     print("Submission created successfully.")
 
@@ -143,15 +150,6 @@ def get_submissions(connection):
 def get_results(connection):
     cursor = connection.cursor()
     cursor.execute("SELECT * FROM Results")
-    return cursor.fetchall()
-
-def get_test_case(connection, assignment_id):
-    cursor = connection.cursor()
-    cursor.execute("""
-        SELECT test_id, test_file, input, expected_output, timeout_seconds 
-        FROM AssignmentTests 
-        WHERE assignment_id = ?
-    """, (assignment_id,))
     return cursor.fetchall()
 
 def get_assignment_id_for_submission (connection, submission_id):
@@ -243,6 +241,17 @@ def update_submission(connection, submission_id, student_id, assignment_id, subm
     connection.commit()
     print("Submission updated successfully.")
 
+def update_submission_result(connection, submission_id, result_id):
+    cursor = connection.cursor()
+    cursor.execute("""
+        UPDATE Submissions
+        SET result_id = ?
+        WHERE submission_id = ?
+    """, (result_id, submission_id))
+    connection.commit()
+    print("Submission updated submission score.")
+
+
 def update_result(connection, result_id, actual_output, expected_output, passed, result):
     cursor = connection.cursor()
     cursor.execute("""
@@ -324,13 +333,16 @@ def add_test_to_assignment(connection, assignment_id, test_id, test_blob, input,
     cursor = connection.cursor()
         
     cursor.execute("""
-        INSERT INTO Tests (test_id, test_function, input, expected_output, timeout_seconds)
+        INSERT INTO Tests (test_id, test_file, input, expected_output, timeout_seconds)
         VALUES (?, ?, ?, ?, ?)
     """, (test_id, test_blob, input, expected_output, timeout_seconds))
         
+    test_id = cursor.lastrowid
+
     cursor.execute("""
-        INSERT INTO AssignmentTests (assignment_id, test_id)
-        VALUES (?, ?)
+        UPDATE Assignments
+        SET test_id = ?
+        WHERE assignment_id = ?;
     """, (assignment_id, test_id))
         
     connection.commit()
@@ -499,20 +511,34 @@ def add_file_to_test(connection, test_id, file_path):
 def save_blob_to_file(file_path, blob):
     try:
         if blob:
+            print(f"Saving blob of size: {len(blob)} to {file_path}")
             with open(file_path, 'wb') as file:
-                file.write(blob[0])
-            print("File has been saved successfully.")
-            return file_path
+                file.write(blob)
+            print(f"File saved successfully at {file_path}")
         else:
-            print("No file found for the given submission ID.")
+            print("Error: Blob data is empty or None.")
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error during file save: {e}")
 
 def save_submission_file(connection, file_path, submission_id):
     """Saves the test file from the database into file_path."""
     blob = get_submission_blob(connection, submission_id)
-    save_blob_to_file(connection, file_path, blob)
+    save_blob_to_file(file_path, blob)
         
 def save_test_file(connection, file_path, assignment_id):
     blob = get_test_blob(connection, assignment_id)
-    save_blob_to_file(connection, file_path, blob)
+    save_blob_to_file(file_path, blob)
+
+def file_to_blob(file_path):
+    if not file_path:
+        print("Error: No file path provided.")
+        return None
+    
+    try:
+        with open(file_path, 'rb') as file:
+            res = file.read()
+        print(f"File {file_path} successfully converted to binary.")
+        return res
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
