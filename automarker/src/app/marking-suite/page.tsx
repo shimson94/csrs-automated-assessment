@@ -6,24 +6,10 @@ import Link from 'next/link'
 import {FaCheckCircle} from 'react-icons/fa'
 import {FaUpload} from 'react-icons/fa'
 
-interface TestScript {
-  id: string
-  name: string
-  dateUploaded: string
-  size: string
-}
-
-interface Assignment {
-  id: string
-  title: string
-  course: string
-  dueDate: string
-}
-
 const MarkingSuite = () => {
   return (
     <div className="min-h-screen bg-gray-100">
-      <Navbar currentTab="marking-suite" setCurrentTab={function (value: React.SetStateAction<string>): void {
+      <Navbar currentTab="marking-suite" setCurrentTab={(): void => {
         throw new Error('Function not implemented.')
       } } />
       <main className="pt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
