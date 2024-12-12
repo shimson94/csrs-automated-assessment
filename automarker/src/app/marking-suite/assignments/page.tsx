@@ -1,15 +1,13 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Navbar from '@/components/Navbar'
 import { Input } from '@/components/MarkingInput'
-import { Button } from '@/components/Button'
-import { FaSearch, FaSort } from 'react-icons/fa'
-import DatePicker from 'react-datepicker'
+import { FaSearch } from 'react-icons/fa'
 import { AssignmentCard } from '@/components/AssignmentCard'
 
 interface Assignment {
-  id: string
+  id: number
   title: string
   module: string
   dueDate: Date
@@ -18,38 +16,38 @@ interface Assignment {
 }
 
 const MarkAssignmentsPage = () => {
-  const [assignments, setAssignments] = useState<Assignment[]>([
-    {
-      id: '1',
-      title: 'Assignment 1: Haskell Advanced News Classifier',
-      module: 'OOP',
-      dueDate: new Date('2024-11-01'),
-      submissions: 50,
-      marked: 30,
-    },
-    {
-      id: '2',
-      title: 'Assignment 2: Homeless Shelter Management System for CS students',
-      module: 'FP',
-      dueDate: new Date('2024-12-15'),
-      marked: 20,
-      submissions: 60
-    },
-  ])
-
+  const [assignments, setAssignments] = useState<Assignment[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [filterDate, setFilterDate] = useState<Date | null>(null)
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [sortOrder] = useState<'asc' | 'desc'>('asc')
+
+  useEffect(() => {
+    const fetchAssignments = async () => {
+      try {
+        const response = await fetch('/api/assignments')
+        if (!response.ok) throw new Error('Failed to fetch assignments')
+        const data = await response.json()
+        setAssignments(data.map((assignment: any) => ({
+          ...assignment,
+          dueDate: new Date(assignment.dueDate)
+        })))
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch assignments')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchAssignments()
+  }, [])
 
   const filteredAssignments = assignments
     .filter((assignment) => {
-      const matchesSearch =
+      return (
         assignment.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         assignment.module.toLowerCase().includes(searchQuery.toLowerCase())
-
-      const matchesDate = filterDate ? assignment.dueDate <= filterDate : true
-
-      return matchesSearch && matchesDate
+      )
     })
     .sort((a, b) => {
       if (sortOrder === 'asc') {
@@ -59,15 +57,17 @@ const MarkAssignmentsPage = () => {
       }
     })
 
+  if (isLoading) return <div>Loading assignments...</div>
+  if (error) return <div>Error: {error}</div>
+
   return (
     <div className="min-h-screen bg-gray-100">
       <Navbar currentTab="marking-suite" setCurrentTab={() => {}} />
       <main className="pt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Page Header */}
+        {/* Header section - always visible */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Mark Assignments</h1>
           <div className="flex items-center gap-4 mt-4 md:mt-0">
-            {/* Search Input */}
             <div className="relative">
               <Input
                 type="text"
@@ -78,41 +78,26 @@ const MarkAssignmentsPage = () => {
               />
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             </div>
-
-            {/* Date Picker */}
-            <DatePicker
-              selected={filterDate}
-              onChange={(date: React.SetStateAction<Date | null>) => setFilterDate(date)}
-              placeholderText="Filter by due date"
-              dateFormat="dd-MM-yyyy"
-              className="h-10 px-3 py-2 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-
-            {/* Sort Button */}
-            <Button
-              variant="outline"
-              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-            >
-              <FaSort className="mr-2" />
-              {sortOrder === 'asc' ? 'Sort Desc' : 'Sort Asc'}
-            </Button>
           </div>
         </div>
 
-        {/* Assignments List */}
+        {/* Content section with error handling */}
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
-          <ul>
-            {filteredAssignments.map((assignment) => (
-              <AssignmentCard 
-                key={assignment.id}
-                assignment={assignment}
-                onMark={(id) => {
-                  console.log(`Marking assignment ${id}`)
-                  // Placeholder for marking logic
-                }}
-              />
-            ))}
-          </ul>
+          {error ? (
+            <div className="p-8 text-center">
+              <p className="text-lg text-red-600">Error: {error}</p>
+            </div>
+          ) : (
+            <ul>
+              {filteredAssignments.map((assignment) => (
+                <AssignmentCard 
+                  key={assignment.id}
+                  assignment={assignment}
+                  onMark={(id) => console.log(`Marking assignment ${id}`)}
+                />
+              ))}
+            </ul>
+          )}
         </div>
       </main>
     </div>

@@ -3,7 +3,7 @@ import { Button } from "@/components/Button"
 import { FaCheckCircle, FaEye } from "react-icons/fa"
 
 interface Assignment {
-  id: string
+  id: number
   title: string
   dueDate: Date
   module: string
@@ -58,7 +58,7 @@ export function AssignmentCard({ assignment, onMark }: AssignmentCardProps) {
           <Button
             variant="default"
             size="sm"
-            onClick={() => onMark(assignment.id)}
+            onClick={() => onMark(assignment.id.toString())}
           >
             Mark
           </Button>
