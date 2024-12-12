@@ -1,4 +1,3 @@
-// components/AssignmentCard.tsx
 import { Button } from "@/components/Button"
 import { FaCheckCircle, FaEye } from "react-icons/fa"
 

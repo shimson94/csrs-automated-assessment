@@ -1,4 +1,3 @@
-// ActivityCard.tsx
 export interface Activity {
     id: number;
     time: string;
