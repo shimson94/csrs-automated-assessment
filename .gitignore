@@ -1,3 +1,7 @@
+
+# Ignore virtual environment
+venv/
+
 # Python
 __pycache__/
 *.py[cod]
@@ -37,4 +41,5 @@ bin/
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
+
 
