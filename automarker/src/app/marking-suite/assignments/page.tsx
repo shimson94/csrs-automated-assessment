@@ -28,7 +28,7 @@ const MarkAssignmentsPage = () => {
         const response = await fetch('/api/assignments')
         if (!response.ok) throw new Error('Failed to fetch assignments')
         const data = await response.json()
-        setAssignments(data.map((assignment: any) => ({
+        setAssignments(data.map((assignment: Assignment) => ({
           ...assignment,
           dueDate: new Date(assignment.dueDate)
         })))

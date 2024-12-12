@@ -1,7 +1,7 @@
 "use client"
 
 import Navbar from '@/components/Navbar'
-import React, {useState} from 'react'
+import React from 'react'
 import Link from 'next/link'
 import {FaCheckCircle} from 'react-icons/fa'
 import {FaUpload} from 'react-icons/fa'
@@ -26,10 +26,8 @@ const MarkingSuite = () => {
       <Navbar currentTab="marking-suite" setCurrentTab={function (value: React.SetStateAction<string>): void {
         throw new Error('Function not implemented.')
       } } />
-      
       <main className="pt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Marking Suite</h1>
-        
         <div className="grid gap-6 md:grid-cols-2">
           <Link 
             href="/marking-suite/test-scripts"
