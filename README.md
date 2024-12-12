@@ -1,1 +1,1 @@
-[![CI/CD Pipeline](https://github.com/Sam-a12/CSRS-Prototype/actions/workflows/ci.yml/badge.svg)](https://github.com/Sam-a12/CSRS-Prototype/actions/workflows/ci.yml)
+[![CI/CD Pipeline](https://github.com/Sam-a12/CSRS-Prototype/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Sam-a12/CSRS-Prototype/actions/workflows/ci.yml)
