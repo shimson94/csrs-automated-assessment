@@ -1,0 +1,22 @@
+automarker:
+  - automarker/**/*
+
+backend:
+  - src/**/*
+
+documentation:
+  - '**/*.md'
+  - docs/**/*
+
+github-actions:
+  - .github/**/*.yml
+
+tests:
+  - '**/*.test.ts'
+  - '**/*.test.tsx'
+  - '**/__tests__/**/*'
+
+dependencies:
+  - '**/package.json'
+  - '**/package-lock.json'
+  - '**/yarn.lock'

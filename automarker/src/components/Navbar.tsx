@@ -23,117 +23,99 @@ const Navbar: React.FC<NavbarProps> = () => {
   };
 
   return (
-    <nav className="bg-white shadow-lg">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex">
+    <nav className="fixed top-0 w-full backdrop-blur-sm border-b border-slate-200/20 bg-white/75 z-50">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="flex h-16 items-center justify-between">
+          <div className="flex items-center gap-8">
             {/* Logo/Home */}
             <Link 
               href="/"
-              className={`flex items-center px-4 ${
-                currentTab === 'home' ? 'border-b-2 border-blue-500' : ''
-              }`}
+              className="flex items-center gap-2 transition-colors"
               onClick={() => setCurrentTab('home')}
             >
-              <span className="font-bold text-xl text-blue-800">AutoMarker</span>
+              <span className="font-inter font-semibold text-xl bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+                AutoMarker
+              </span>
             </Link>
-
-            {/* Navigation Links */}
-            <div className="hidden md:flex items-center space-x-4">
-              <Link
-                href="/submissions"
-                className={`px-3 py-2 rounded-md ${
-                  currentTab === 'submissions' ? 'bg-blue-100 text-blue-700' : 'text-gray-700'
-                }`}
-                onClick={() => setCurrentTab('submissions')}
-              >
-                Submissions
-              </Link>
-              <Link
-                href="/assignments"
-                className={`px-3 py-2 rounded-md ${
-                  currentTab === 'assignments' ? 'bg-blue-100 text-blue-700' : 'text-gray-700'
-                }`}
-                onClick={() => setCurrentTab('assignments')}
-              >
-                Assignments
-              </Link>
-              <Link
-                href="/marking-suite"
-                className={`px-3 py-2 rounded-md ${
-                  currentTab === 'marking-suite' ? 'bg-blue-100 text-blue-700' : 'text-gray-700'
-                }`}
-                onClick={() => setCurrentTab('marking-suite')}
-              >
-                Marking Suite
-              </Link>
+  
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-6">
+              {['submissions', 'assignments', 'marking-suite'].map((item) => (
+                <Link
+                  key={item}
+                  href={`/${item}`}
+                  className={`
+                    font-inter text-sm font-medium px-3 py-2 rounded-md
+                    transition-all duration-200 ease-in-out
+                    ${currentTab === item 
+                      ? 'bg-slate-100 text-slate-900' 
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                    }
+                  `}
+                  onClick={() => setCurrentTab(item)}
+                >
+                  {item.charAt(0).toUpperCase() + item.slice(1).replace('-', ' ')}
+                </Link>
+              ))}
             </div>
           </div>
-
+  
           {/* Mobile Menu Button */}
-          <div className="flex items-center md:hidden">
+          <div className="flex md:hidden">
             <button
               type="button"
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-              aria-controls="mobile-menu"
-              aria-expanded={isMobileMenuOpen}
+              className="inline-flex items-center justify-center rounded-md p-2
+                         text-slate-600 hover:text-slate-900 hover:bg-slate-100
+                         focus:outline-none focus:ring-2 focus:ring-inset focus:ring-slate-500
+                         transition-colors"
               onClick={toggleMobileMenu}
             >
-              <span className="sr-only">Open main menu</span>
-              {/* Icon when menu is closed. */}
-              <svg className={`${isMobileMenuOpen ? 'hidden' : 'block'} h-6 w-6`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7" />
-              </svg>
-              {/* Icon when menu is open. */}
-              <svg className={`${isMobileMenuOpen ? 'block' : 'hidden'} h-6 w-6`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <span className="sr-only">Toggle menu</span>
+              {isMobileMenuOpen ? (
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
             </button>
           </div>
         </div>
       </div>
-
-      {/* Mobile Menu */}
-      <div className={`md:hidden ${isMobileMenuOpen ? 'block' : 'hidden'}`} id="mobile-menu">
-        <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+  
+      {/* Mobile Menu - Updated for more compact design */}
+    <div
+      className={`
+        md:hidden
+        transition-all duration-200 ease-in-out
+        ${isMobileMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}
+      `}
+    >
+      <div className="px-2 py-1 space-y-0.5 bg-white/75 backdrop-blur-sm border-t border-slate-200/20">
+        {['submissions', 'assignments', 'marking-suite'].map((item) => (
           <Link
-            href="/submissions"
-            className={`block px-3 py-2 rounded-md text-base font-medium ${
-              currentTab === 'submissions' ? 'bg-blue-100 text-blue-700' : 'text-gray-700'
-            }`}
+            key={item}
+            href={`/${item}`}
+            className={`
+              block font-inter text-xs font-medium px-2.5 py-1.5 rounded-md
+              transition-all duration-150 ease-in-out
+              ${currentTab === item 
+                ? 'bg-slate-100 text-slate-900' 
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }
+            `}
             onClick={() => {
-              setCurrentTab('submissions');
+              setCurrentTab(item);
               setIsMobileMenuOpen(false);
             }}
           >
-            Submissions
+            {item.charAt(0).toUpperCase() + item.slice(1).replace('-', ' ')}
           </Link>
-          <Link
-            href="/assignments"
-            className={`block px-3 py-2 rounded-md text-base font-medium ${
-              currentTab === 'assignments' ? 'bg-blue-100 text-blue-700' : 'text-gray-700'
-            }`}
-            onClick={() => {
-              setCurrentTab('assignments');
-              setIsMobileMenuOpen(false);
-            }}
-          >
-            Assignments
-          </Link>
-          <Link
-            href="/marking-suite"
-            className={`block px-3 py-2 rounded-md text-base font-medium ${
-              currentTab === 'marking-suite' ? 'bg-blue-100 text-blue-700' : 'text-gray-700'
-            }`}
-            onClick={() => {
-              setCurrentTab('marking-suite');
-              setIsMobileMenuOpen(false);
-            }}
-          >
-            Marking Suite
-          </Link>
-        </div>
+        ))}
       </div>
+    </div>
     </nav>
   );
 };

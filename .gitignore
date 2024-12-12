@@ -1,0 +1,45 @@
+
+# Ignore virtual environment
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.db
+*.sqlite
+*.log
+
+# Virtual environment
+.venv/
+env/
+venv/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+CMakeLists.txt.user
+cmake_install.cmake
+Makefile
+
+# Build
+build/
+bin/
+
+# IDE/editor-specific files
+*.swp
+*.swo
+*.bak
+
+# Python test-related
+.tox/
+.nox/
+.coverage
+*.coveragerc
+*.hypothesis/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+
