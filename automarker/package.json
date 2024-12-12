@@ -12,9 +12,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "concurrently": "^8.2.2",
     "next": "15.0.4",
     "react": "^19.0.0",
-    "concurrently": "^8.2.2"
     "react-datepicker": "^7.5.0",
     "react-dom": "^19.0.0",
     "react-icons": "^5.4.0"
