@@ -1,8 +1,20 @@
+# -------------------------
+# OS-specific
+# -------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
 
-# Ignore virtual environment
-venv/
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 
+# -------------------------
 # Python
+# -------------------------
 __pycache__/
 *.py[cod]
 *.pyo
@@ -11,26 +23,10 @@ __pycache__/
 *.sqlite
 *.log
 
-# Virtual environment
+# Virtual environments
 .venv/
 env/
 venv/
-
-# CMake
-CMakeCache.txt
-CMakeFiles/
-CMakeLists.txt.user
-cmake_install.cmake
-Makefile
-
-# Build
-build/
-bin/
-
-# IDE/editor-specific files
-*.swp
-*.swo
-*.bak
 
 # Python test-related
 .tox/
@@ -42,4 +38,39 @@ bin/
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
 
+# -------------------------
+# Node.js / Next.js
+# -------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 
+# Next.js build output
+.next/
+out/
+
+# Local env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# -------------------------
+# Build / distribution
+# -------------------------
+build/
+dist/
+bin/
+
+# -------------------------
+# IDE/editor-specific
+# -------------------------
+*.swp
+*.swo
+*.bak
+.idea/
+.vscode/
+*.code-workspace
