@@ -21,8 +21,8 @@ CREATE TABLE IF NOT EXISTS Assignments (
     test_id INTEGER,
     rubric TEXT NOT NULL,
     threshold REAL NOT NULL,
-    due_date DATE NOT NULL
-    FOREIGN KEY (rest_id) REFERENCES TESTS (test_id)
+    due_date DATE NOT NULL,
+    FOREIGN KEY (test_id) REFERENCES Tests (test_id)
 );
 
 CREATE TABLE IF NOT EXISTS Submissions (

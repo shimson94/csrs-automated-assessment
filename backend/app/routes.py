@@ -5,9 +5,9 @@ from flask import request, Blueprint, jsonify
 #Add the root directory of the project to the Python path
 project_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_root))
+
 from database import connect_database
 from automarker import AutoMarker
-
 
 api_blueprint = Blueprint("api", __name__)
 
