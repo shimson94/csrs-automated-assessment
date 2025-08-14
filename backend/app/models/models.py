@@ -47,6 +47,23 @@ class UserType(Enum):
     TEACHER = "teacher"
     STUDENT = "student"
     ADMIN = "admin"
+
+class UKModuleGrade(Enum):
+    FIRST_CLASS = "first_class"
+    UPPER_SECOND = "upper_second"
+    LOWER_SECOND = "lower_second"
+    THIRD_CLASS = "third_class"
+    FAIL = "fail"
+    IN_PROGRESS = "in_progress"
+    DEFERRED = "deferred"
+    WITHDRAWN = "withdrawn"
+
+class AcademicYear(Enum):
+    FOUNDATION = "foundation"
+    YEAR_1 = "year_1"
+    YEAR_2 = "year_2"
+    YEAR_3 = "year_3"
+    MASTERS = "masters"
     
 class TestType(Enum):
     UNIT = "unit_test"           # Test individual functions
@@ -116,9 +133,14 @@ teacher_modules = db.Table('teacher_modules',
 student_enrollments = db.Table('student_enrollments',
     db.Column('student_id', db.Integer, db.ForeignKey('students.student_id'), primary_key=True),
     db.Column('module_id', db.Integer, db.ForeignKey('modules.module_id'), primary_key=True),
+    db.Column('academic_year', db.Enum(AcademicYear), nullable=False),
     db.Column('enrollment_date', db.DateTime, default=lambda: datetime.now(timezone.utc)),
     db.Column('completion_date', db.DateTime),
-    db.Column('final_grade', db.Float),
+    db.Column('final_coursework_average', db.Float),  # Average of all coursework marks
+    db.Column('exam_mark', db.Float),  # Exam mark if applicable
+    db.Column('overall_grade', db.Enum(UKModuleGrade)),  # Final module grade
+    db.Column('coursework_weight', db.Float, default=100.0),  # Percentage weight for coursework (0-100)
+    db.Column('exam_weight', db.Float, default=0.0),  # Percentage weight for exam (0-100)
     db.Column('status', db.Enum(EnrollmentStatus), default=EnrollmentStatus.ACTIVE)
 )
 
@@ -176,7 +198,6 @@ class Department(db.Model):
     contact_email = db.Column(db.String(255))
     phone = db.Column(db.String(20))
     office_location = db.Column(db.String(100))
-    budget = db.Column(db.Float)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
@@ -243,7 +264,6 @@ class Teacher(db.Model):
     department_id = db.Column(db.Integer, db.ForeignKey('departments.department_id'))
     phone = db.Column(db.String(20))
     office_location = db.Column(db.String(100))
-    hire_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
@@ -277,10 +297,20 @@ class Student(db.Model):
     student_number = db.Column(db.String(50), nullable=False, unique=True)
     institution_id = db.Column(db.Integer, db.ForeignKey('institutions.institution_id'), nullable=False)
     phone = db.Column(db.String(20))
-    date_of_birth = db.Column(db.Date)
     enrollment_year = db.Column(db.Integer)
-    graduation_date = db.Column(db.Date)
-    gpa = db.Column(db.Float)
+    current_academic_year = db.Column(db.Enum(AcademicYear), default=AcademicYear.YEAR_1)
+    
+    # UK Academic Year Averages - calculated from module enrollments
+    foundation_average = db.Column(db.Float)  # Foundation year average (if applicable)
+    year_1_average = db.Column(db.Float)      # First year average
+    year_2_average = db.Column(db.Float)      # Second year average  
+    year_3_average = db.Column(db.Float)      # Final year average
+    masters_average = db.Column(db.Float)     # Masters year average (if applicable)
+    
+    # Overall progress indicators
+    overall_coursework_average = db.Column(db.Float)  # Average across all completed modules
+    predicted_degree_class = db.Column(db.Enum(UKModuleGrade))  # Based on current progress
+    
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
@@ -289,6 +319,73 @@ class Student(db.Model):
     institution = db.relationship('Institution', back_populates='students')
     modules = db.relationship('Module', secondary=student_enrollments, back_populates='students')
     submissions = db.relationship('Submission', back_populates='student')
+    
+    def calculate_year_average(self, academic_year: AcademicYear) -> float:
+        """Calculate average for a specific academic year based on module enrollments."""
+        from sqlalchemy import text
+        
+        result = db.session.execute(text("""
+            SELECT AVG(
+                CASE 
+                    WHEN se.coursework_weight = 100 THEN se.final_coursework_average
+                    WHEN se.exam_weight > 0 AND se.exam_mark IS NOT NULL THEN 
+                        (se.final_coursework_average * se.coursework_weight / 100) + 
+                        (se.exam_mark * se.exam_weight / 100)
+                    ELSE se.final_coursework_average
+                END
+            ) as year_average
+            FROM student_enrollments se
+            WHERE se.student_id = :student_id 
+            AND se.academic_year = :academic_year
+            AND se.status = 'completed'
+            AND se.final_coursework_average IS NOT NULL
+        """), {
+            'student_id': self.student_id, 
+            'academic_year': academic_year.value
+        }).fetchone()
+        
+        return result[0] if result and result[0] is not None else None
+    
+    def update_academic_averages(self):
+        """Update all academic year averages and overall progress."""
+        self.foundation_average = self.calculate_year_average(AcademicYear.FOUNDATION)
+        self.year_1_average = self.calculate_year_average(AcademicYear.YEAR_1)
+        self.year_2_average = self.calculate_year_average(AcademicYear.YEAR_2)
+        self.year_3_average = self.calculate_year_average(AcademicYear.YEAR_3)
+        self.masters_average = self.calculate_year_average(AcademicYear.MASTERS)
+        
+        # Calculate overall average from completed modules
+        from sqlalchemy import text
+        result = db.session.execute(text("""
+            SELECT AVG(
+                CASE 
+                    WHEN se.coursework_weight = 100 THEN se.final_coursework_average
+                    WHEN se.exam_weight > 0 AND se.exam_mark IS NOT NULL THEN 
+                        (se.final_coursework_average * se.coursework_weight / 100) + 
+                        (se.exam_mark * se.exam_weight / 100)
+                    ELSE se.final_coursework_average
+                END
+            ) as overall_average
+            FROM student_enrollments se
+            WHERE se.student_id = :student_id 
+            AND se.status = 'completed'
+            AND se.final_coursework_average IS NOT NULL
+        """), {'student_id': self.student_id}).fetchone()
+        
+        if result and result[0] is not None:
+            self.overall_coursework_average = result[0]
+            
+            # Determine predicted degree class based on UK standards
+            if self.overall_coursework_average >= 70:
+                self.predicted_degree_class = UKModuleGrade.FIRST_CLASS
+            elif self.overall_coursework_average >= 60:
+                self.predicted_degree_class = UKModuleGrade.UPPER_SECOND
+            elif self.overall_coursework_average >= 50:
+                self.predicted_degree_class = UKModuleGrade.LOWER_SECOND
+            elif self.overall_coursework_average >= 40:
+                self.predicted_degree_class = UKModuleGrade.THIRD_CLASS
+            else:
+                self.predicted_degree_class = UKModuleGrade.FAIL
     
     def to_dict(self):
         return {
@@ -300,7 +397,14 @@ class Student(db.Model):
             'institution_id': self.institution_id,
             'phone': self.phone,
             'enrollment_year': self.enrollment_year,
-            'gpa': self.gpa,
+            'current_academic_year': self.current_academic_year.value if self.current_academic_year else None,
+            'foundation_average': self.foundation_average,
+            'year_1_average': self.year_1_average,
+            'year_2_average': self.year_2_average,
+            'year_3_average': self.year_3_average,
+            'masters_average': self.masters_average,
+            'overall_coursework_average': self.overall_coursework_average,
+            'predicted_degree_class': self.predicted_degree_class.value if self.predicted_degree_class else None,
             'is_active': self.is_active
         }
 class Module(db.Model):

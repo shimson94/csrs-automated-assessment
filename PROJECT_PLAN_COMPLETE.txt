@@ -1,0 +1,1137 @@
+================================================================================
+CSRS AUTOMATED ASSESSMENT - COMPLETE PROJECT IMPLEMENTATION PLAN
+================================================================================
+Last Updated: August 14, 2025
+Current Status: Step 3 Complete, Moving to Step 4 (Authentication)
+
+================================================================================
+WHAT WE HAVE ACCOMPLISHED SO FAR
+================================================================================
+
+✅ STEP 1: DATABASE DESIGN (COMPLETE)
+----------------------------------------
+Files Modified/Created:
+- backend/app/models/models.py - ENHANCED
+
+What Was Done:
+- Created comprehensive SQLAlchemy models with UK academic structure
+- Added proper enums for data integrity (UserType, SubmissionStatus, UKModuleGrade, etc.)
+- Implemented association tables with metadata (teacher_modules, student_enrollments)
+- Added UK academic year tracking (foundation, year_1-3, masters averages)
+- Enhanced with audit timestamps, status tracking, security fields
+- Added realistic academic progress calculation methods
+
+Models Created:
+- Institution, Department, Subject, Module
+- Teacher, Student (with UK academic structure)
+- Assignment, Test, Submission, Result
+- ActivityLog
+- All supporting enums and association tables
+
+✅ STEP 2: FLASK-SQLALCHEMY INTEGRATION (COMPLETE)
+---------------------------------------------------
+Files Modified:
+- backend/app/app.py - UPDATED
+
+What Was Done:
+- Updated app.py to use SQLAlchemy instead of raw SQL
+- Added automatic database initialization with sample data
+- Fixed Python 3.13 compatibility issues
+- Created comprehensive UK sample data:
+  * 1 Institution (Sample University)
+  * 1 Department (Computer Science) 
+  * 1 Subject (Programming)
+  * 1 Module (Introduction to Python Programming)
+  * 1 Teacher (Dr. John Smith)
+  * 5 Students with different academic years
+  * 3 Assignments with UK academic context
+  * 3 Test cases
+  * 5+ Submissions with realistic data
+  * Activity logs and enrollment data
+
+✅ STEP 3: ROUTES MIGRATION TO SQLALCHEMY (COMPLETE)
+-----------------------------------------------------
+Files Created/Modified:
+- backend/app/blueprints/__init__.py - CREATED
+- backend/app/blueprints/submissions.py - CREATED/COMPLETE
+
+What Was Done:
+- Created complete submissions API blueprint using SQLAlchemy ORM
+- Implemented modern Flask blueprint architecture for scalability
+- Added comprehensive error handling and validation
+- Fixed timezone-aware datetime handling
+- Added pagination, filtering, and sorting
+- Implemented proper JSON responses with structured error messages
+
+API Endpoints Working:
+- GET /api/submissions - List submissions with pagination/filtering
+- POST /api/submissions - Create new submission
+- GET /api/submissions/{id} - Get individual submission
+- GET /api/results - List results with filtering
+- POST /api/submissions/{id}/grade - Grade submission (basic)
+- PUT /api/submissions/{id}/regrade - Regrade submission
+- GET /api/health - Health check
+
+Features Implemented:
+- Input validation using enums
+- Pagination (page, per_page, total, has_next, has_prev)
+- Filtering by student_id, assignment_id, status
+- Error handling with proper HTTP status codes
+- UK academic structure integration
+- File content handling (BLOB storage)
+
+================================================================================
+CURRENT ISSUE: AUTOMARKER INTEGRATION
+================================================================================
+
+Problem:
+- backend/app/automarker.py exists but uses OLD raw SQL approach
+- Grade endpoint returns "Grading failed" due to integration mismatch
+- Need to modernize AutoMarker to use SQLAlchemy models
+
+Files Needing Update:
+- backend/app/automarker.py - NEEDS COMPLETE REWRITE
+
+What Needs to Be Done:
+- Rewrite AutoMarker class to use SQLAlchemy models instead of raw SQL
+- Update to work with BLOB file storage
+- Integrate with Result model for storing test results
+- Fix grading workflow in submissions.py
+
+================================================================================
+REMAINING WORK: COMPLETE API BLUEPRINT ARCHITECTURE
+================================================================================
+
+PRIORITY ORDER (As User Requested):
+1. Authentication Endpoints
+2. Assignment Management  
+3. Student Submission (enhance existing)
+4. File Management
+5. Automated Testing & Grading
+6. All remaining endpoints
+
+================================================================================
+STEP 4: AUTHENTICATION BLUEPRINT (NEXT - HIGH PRIORITY)
+================================================================================
+
+File to Create:
+- backend/app/blueprints/auth.py - CREATE NEW
+
+Dependencies to Install:
+- Flask-JWT-Extended
+- bcrypt or werkzeug.security
+
+Endpoints to Implement:
+POST /api/auth/login          - User login (students/teachers/admins)
+POST /api/auth/logout         - User logout  
+POST /api/auth/register       - New user registration (if needed)
+POST /api/auth/refresh        - Refresh JWT token
+GET  /api/auth/me            - Get current user profile
+PUT  /api/auth/profile       - Update user profile
+POST /api/auth/reset-password - Password reset functionality
+
+What Goes in auth.py:
+- JWT token creation and validation
+- Password hashing/verification
+- Role-based authentication decorators
+- User session management
+- Login/logout logic
+- Profile management
+
+Files to Modify:
+- backend/app/app.py - Add JWT configuration
+- backend/app/blueprints/__init__.py - Register auth blueprint
+- backend/app/models/models.py - Add password_hash field handling (already exists)
+
+Authentication Features Needed:
+- JWT-based authentication (stateless)
+- Role-based access (Student, Teacher, Admin)
+- Secure password handling
+- Token refresh mechanism
+- Session validation
+- @jwt_required decorators for protecting endpoints
+
+================================================================================
+STEP 5: ASSIGNMENT MANAGEMENT BLUEPRINT
+================================================================================
+
+File to Create:
+- backend/app/blueprints/assignments.py - CREATE NEW
+
+Endpoints to Implement:
+GET    /api/assignments               - List assignments (with auth filters)
+POST   /api/assignments               - Create new assignment (teachers only)
+GET    /api/assignments/{id}          - Get assignment details
+PUT    /api/assignments/{id}          - Update assignment (teachers only)
+DELETE /api/assignments/{id}          - Delete assignment (teachers only)
+POST   /api/assignments/{id}/publish  - Publish assignment
+GET    /api/assignments/{id}/submissions - Get all submissions for assignment
+GET    /api/assignments/{id}/stats    - Assignment statistics
+POST   /api/assignments/{id}/duplicate - Duplicate assignment
+
+What Goes in assignments.py:
+- CRUD operations for Assignment model
+- Teacher permission validation
+- Assignment-to-module linking
+- Due date validation
+- Assignment publishing workflow
+- Statistics calculation
+
+Dependencies:
+- Requires auth.py for @jwt_required and @role_required decorators
+
+================================================================================
+STEP 6: ENHANCE STUDENT SUBMISSION BLUEPRINT
+================================================================================
+
+File to Modify:
+- backend/app/blueprints/submissions.py - ENHANCE EXISTING
+
+What to Add:
+- Authentication decorators (@jwt_required)
+- Role-based access (students can only see their own submissions)
+- Enhanced file upload capabilities
+- Submission validation and limits
+- Integration with assignment due dates
+- Student dashboard endpoints
+
+New Endpoints to Add:
+GET /api/students/dashboard        - Student dashboard data
+GET /api/students/assignments      - My assignments
+GET /api/students/submissions      - My submissions  
+GET /api/students/grades           - My grades
+
+What to Enhance:
+- Add authentication to all existing endpoints
+- Add ownership validation (students only see their data)
+- Enhance file content validation
+- Add submission limit checking
+
+================================================================================
+STEP 7: FILE MANAGEMENT BLUEPRINT
+================================================================================
+
+File to Create:
+- backend/app/blueprints/files.py - CREATE NEW
+
+Endpoints to Implement:
+POST   /api/files/upload              - Upload submission file
+GET    /api/files/{id}/download       - Download file (with auth)
+DELETE /api/files/{id}                - Delete file (with permissions)
+POST   /api/files/validate            - Validate file type/size
+GET    /api/files/{id}/content        - Get file content (for display)
+
+What Goes in files.py:
+- Secure file upload handling
+- File type validation (Python, Java, C++, etc.)
+- File size limits
+- Anti-malware scanning (basic)
+- File versioning support
+- Integration with Submission model BLOB storage
+
+Dependencies:
+- Requires auth.py for file access control
+- Integration with submissions.py
+
+================================================================================
+STEP 8: AUTOMATED TESTING & GRADING ENHANCEMENT
+================================================================================
+
+Files to Create/Modify:
+- backend/app/automarker.py - REWRITE COMPLETELY
+- backend/app/blueprints/tests.py - CREATE NEW
+
+Automarker.py Rewrite Requirements:
+- Remove all raw SQL database connections
+- Use SQLAlchemy models (Submission, Assignment, Test, Result)
+- Handle BLOB file storage properly  
+- Integrate with Result model for storing grades
+- Support multiple programming languages
+- Add comprehensive error handling
+- Add execution timeouts and security
+
+tests.py Endpoints:
+GET    /api/tests                     - List test cases (teachers)
+POST   /api/tests                     - Create test case (teachers)
+GET    /api/tests/{id}                - Get test details
+PUT    /api/tests/{id}                - Update test (teachers)
+DELETE /api/tests/{id}                - Delete test (teachers)
+POST   /api/tests/{id}/run            - Run test manually
+GET    /api/tests/{id}/results        - Get test results history
+
+What Goes in Automarker:
+- Code execution in secure environment
+- Test case validation
+- Output comparison
+- Score calculation
+- Feedback generation
+- Integration with multiple programming languages
+
+================================================================================
+STEP 9: REMAINING BLUEPRINTS (LOWER PRIORITY)
+================================================================================
+
+9A. ACADEMIC STRUCTURE BLUEPRINT
+File to Create: backend/app/blueprints/academic.py
+
+Endpoints:
+# Departments
+GET    /api/departments               - List departments
+POST   /api/departments               - Create department (admin)
+GET    /api/departments/{id}          - Get department
+PUT    /api/departments/{id}          - Update department (admin)
+DELETE /api/departments/{id}          - Delete department (admin)
+
+# Subjects  
+GET    /api/subjects                  - List subjects
+POST   /api/subjects                  - Create subject (admin)
+GET    /api/subjects/{id}             - Get subject
+PUT    /api/subjects/{id}             - Update subject (admin)
+DELETE /api/subjects/{id}             - Delete subject (admin)
+
+# Modules
+GET    /api/modules                   - List modules
+POST   /api/modules                   - Create module (teachers)
+GET    /api/modules/{id}              - Get module details
+PUT    /api/modules/{id}              - Update module (teachers)
+DELETE /api/modules/{id}              - Delete module (teachers)
+GET    /api/modules/{id}/students     - Get enrolled students
+POST   /api/modules/{id}/enroll       - Enroll student
+DELETE /api/modules/{id}/students/{student_id} - Remove student
+
+9B. TEACHER MANAGEMENT BLUEPRINT
+File to Create: backend/app/blueprints/teachers.py
+
+Endpoints:
+GET    /api/teachers/dashboard        - Teacher dashboard
+GET    /api/teachers/assignments      - My assignments
+GET    /api/teachers/modules          - My modules  
+GET    /api/teachers/students         - My students
+POST   /api/teachers/grade            - Manual grading override
+GET    /api/teachers/analytics        - Teaching analytics
+GET    /api/teachers/submissions      - All submissions for my assignments
+
+9C. ANALYTICS & REPORTING BLUEPRINT
+File to Create: backend/app/blueprints/analytics.py
+
+Endpoints:
+GET    /api/analytics/overview        - System overview (admin)
+GET    /api/analytics/students        - Student performance analytics
+GET    /api/analytics/assignments     - Assignment difficulty analytics
+GET    /api/analytics/modules         - Module completion rates
+GET    /api/analytics/export          - Export reports
+GET    /api/analytics/grades          - Grade distribution
+
+9D. INSTITUTION MANAGEMENT BLUEPRINT  
+File to Create: backend/app/blueprints/institutions.py
+
+Endpoints:
+GET    /api/institutions              - List all institutions (admin)
+POST   /api/institutions              - Create new institution (admin)
+GET    /api/institutions/{id}         - Get institution details
+PUT    /api/institutions/{id}         - Update institution (admin)
+DELETE /api/institutions/{id}         - Delete institution (admin)
+GET    /api/institutions/{id}/stats   - Institution statistics
+
+================================================================================
+ADDITIONAL FILES NEEDED
+================================================================================
+
+Configuration Files:
+- backend/requirements.txt - ADD Flask-JWT-Extended, bcrypt
+- backend/app/config.py - CREATE for JWT settings
+- backend/app/middleware/auth.py - CREATE for auth decorators
+
+Utility Files:
+- backend/app/utils/validators.py - CREATE for input validation
+- backend/app/utils/decorators.py - CREATE for role-based decorators
+- backend/app/utils/responses.py - CREATE for standardized API responses
+
+Security Files:
+- backend/app/security/file_validation.py - CREATE for file security
+- backend/app/security/code_sanitization.py - CREATE for code safety
+
+================================================================================
+IMPLEMENTATION SEQUENCE
+================================================================================
+
+IMMEDIATE NEXT STEPS (Week 1):
+1. Fix AutoMarker integration with SQLAlchemy
+2. Create auth.py blueprint with JWT
+3. Add authentication to existing submissions.py
+4. Create assignments.py blueprint
+
+MEDIUM TERM (Week 2-3):
+5. Create files.py blueprint for file management
+6. Enhance submissions.py with student dashboard features
+7. Create tests.py blueprint
+8. Enhance AutoMarker with multiple language support
+
+LONG TERM (Week 4+):
+9. Create academic.py for academic structure
+10. Create teachers.py for teacher features
+11. Create analytics.py for reporting
+12. Create institutions.py for admin features
+
+================================================================================
+SUCCESS CRITERIA
+================================================================================
+
+Phase 1 Complete When:
+- Students can log in and submit assignments
+- Teachers can log in and create assignments  
+- Automated grading works end-to-end
+- File upload/download works securely
+
+Phase 2 Complete When:
+- Full academic structure management works
+- Analytics and reporting functional
+- Multi-language support implemented
+- Admin institution management works
+
+Final System Complete When:
+- All 9 blueprints implemented and tested
+- Frontend React app fully integrated
+- Security hardened and production-ready
+- Documentation complete
+
+================================================================================
+CURRENT STATE SUMMARY
+================================================================================
+
+✅ COMPLETED:
+- Database models with UK academic structure
+- Sample data creation
+- Basic submissions API with SQLAlchemy
+- Blueprint architecture foundation
+
+🔄 IN PROGRESS:
+- AutoMarker SQLAlchemy integration
+
+📅 NEXT IMMEDIATE TASKS:
+1. Fix AutoMarker class to work with SQLAlchemy
+2. Create auth.py blueprint with JWT authentication
+3. Add @jwt_required to submissions.py endpoints
+4. Create assignments.py blueprint for teachers
+
+================================================================================
+END OF PROJECT PLAN
+================================================================================
+
+🏗️ Complete API Architecture Needed
+1. Authentication Blueprint (auth.py)
+Purpose: User login, registration, JWT token management
+
+2. Institution Management Blueprint (institutions.py)
+Purpose: Admin management of academic institutions
+
+3. Academic Structure Blueprint (academic.py)
+Purpose: Departments, subjects, modules management
+
+4. Assignment Management Blueprint (assignments.py)
+Purpose: Teachers creating and managing assignments
+
+5. Test Management Blueprint (tests.py)
+Purpose: Creating and managing automated tests
+
+6. Student Management Blueprint (students.py)
+Purpose: Student-specific functionality
+
+7. Teacher Management Blueprint (teachers.py)
+Purpose: Teacher-specific functionality
+
+8. File Management Blueprint (files.py)
+Purpose: Secure file upload/download
+
+9. Analytics & Reporting Blueprint (analytics.py)
+Purpose: System statistics and reports
+
+Immediate Next Steps:
+
+Fix AutoMarker SQLAlchemy integration
+Create auth.py blueprint with JWT
+Create assignments.py blueprint
+Enhance existing submissions.py with authentication
+Total Blueprints Needed: 9 files in the blueprints folder
+
+✅ submissions.py (complete)
+🔄 auth.py (next priority)
+📅 assignments.py
+📅 files.py
+📅 tests.py
+📅 academic.py
+📅 teachers.py
+📅 analytics.py
+📅 institutions.py
+
+================================================================================
+FRONTEND DEVELOPMENT (STEPS 10-14)
+================================================================================
+
+STEP 10: REACT APP FOUNDATION & SETUP
+======================================
+
+Files to Create:
+- frontend/package.json - CREATE (React dependencies)
+- frontend/src/App.js - CREATE (Main app component)
+- frontend/src/index.js - CREATE (React entry point)
+- frontend/src/index.css - CREATE (Global styles)
+- frontend/public/index.html - CREATE (HTML template)
+- frontend/.env - CREATE (Environment variables)
+
+Dependencies to Install:
+- React 18+ (latest stable)
+- React Router DOM (navigation)
+- Axios (API calls)
+- Material-UI or Tailwind CSS (UI framework)
+- React Query/SWR (API state management)
+- React Hook Form (form handling)
+- React Toastify (notifications)
+- Recharts (data visualization)
+- Monaco Editor (code editor)
+- WebSocket client (real-time updates)
+
+Project Structure:
+frontend/
+├── public/
+│   ├── index.html
+│   └── favicon.ico
+├── src/
+│   ├── components/          # Reusable UI components
+│   ├── pages/              # Page components
+│   ├── services/           # API service functions
+│   ├── hooks/              # Custom React hooks
+│   ├── utils/              # Utility functions
+│   ├── context/            # React context providers
+│   ├── assets/             # Images, icons, etc.
+│   ├── styles/             # CSS/SCSS files
+│   ├── App.js              # Main app component
+│   └── index.js            # React entry point
+├── package.json
+└── README.md
+
+Configuration Files to Create:
+- frontend/.eslintrc.js - Code linting rules
+- frontend/.prettierrc - Code formatting rules
+- frontend/jsconfig.json - VS Code intellisense
+- frontend/.gitignore - Git ignore rules
+
+STEP 11: AUTHENTICATION & ROUTING FOUNDATION
+=============================================
+
+Files to Create:
+- frontend/src/context/AuthContext.js - CREATE (Authentication state)
+- frontend/src/services/authService.js - CREATE (Authentication API calls)
+- frontend/src/components/ProtectedRoute.js - CREATE (Route protection)
+- frontend/src/hooks/useAuth.js - CREATE (Authentication hook)
+- frontend/src/utils/tokenManager.js - CREATE (JWT token management)
+
+Authentication Pages to Create:
+- frontend/src/pages/Login.js - CREATE (Login page)
+- frontend/src/pages/Register.js - CREATE (Registration page)
+- frontend/src/pages/ForgotPassword.js - CREATE (Password reset)
+- frontend/src/pages/Profile.js - CREATE (User profile management)
+
+Routing Structure:
+- / - Landing/Dashboard (role-based redirect)
+- /login - Login page
+- /register - Registration page
+- /forgot-password - Password reset
+- /student/* - Student-only routes
+- /teacher/* - Teacher-only routes
+- /admin/* - Admin-only routes
+
+What Goes in AuthContext:
+- User authentication state
+- Login/logout functions
+- JWT token management
+- Role-based permissions
+- Auto token refresh
+- Persistent login state
+
+STEP 12: STUDENT FRONTEND PAGES & COMPONENTS
+=============================================
+
+Student Pages to Create:
+- frontend/src/pages/student/Dashboard.js - CREATE (Student overview)
+- frontend/src/pages/student/Assignments.js - CREATE (Available assignments)
+- frontend/src/pages/student/AssignmentDetail.js - CREATE (Single assignment view)
+- frontend/src/pages/student/Submissions.js - CREATE (My submissions)
+- frontend/src/pages/student/SubmissionDetail.js - CREATE (Single submission view)
+- frontend/src/pages/student/Grades.js - CREATE (Academic progress)
+- frontend/src/pages/student/Modules.js - CREATE (Enrolled modules)
+- frontend/src/pages/student/Profile.js - CREATE (Student profile)
+
+Student Components to Create:
+- frontend/src/components/student/AssignmentCard.js - CREATE (Assignment preview)
+- frontend/src/components/student/SubmissionForm.js - CREATE (File upload form)
+- frontend/src/components/student/CodeEditor.js - CREATE (In-browser code editor)
+- frontend/src/components/student/GradeDisplay.js - CREATE (Grade visualization)
+- frontend/src/components/student/ProgressChart.js - CREATE (Academic progress)
+- frontend/src/components/student/NotificationBell.js - CREATE (Real-time notifications)
+- frontend/src/components/student/FileUpload.js - CREATE (Drag-drop file upload)
+- frontend/src/components/student/SubmissionHistory.js - CREATE (Previous attempts)
+
+Student Page Features:
+Dashboard:
+- Overview of active assignments
+- Recent submissions status
+- Current academic year progress
+- Upcoming deadlines
+- Quick stats (assignments completed, average grade, etc.)
+
+Assignments:
+- List of available assignments
+- Filter by module, due date, status
+- Search functionality
+- Assignment difficulty indicators
+- Quick submit buttons
+
+Assignment Detail:
+- Assignment description and requirements
+- Test case examples (if available)
+- Due date and late submission penalties
+- Previous submission attempts
+- In-browser code editor for quick testing
+- File upload area (drag-drop)
+- Submit button with confirmation
+
+Submissions:
+- List of all submissions with status
+- Filter by assignment, date, status
+- Resubmit functionality
+- Download previous submissions
+- Grade and feedback display
+
+Grades:
+- Academic year averages
+- Module-wise performance
+- Grade trends over time
+- Comparison with class averages
+- Progress towards degree classification
+
+STEP 13: TEACHER FRONTEND PAGES & COMPONENTS
+=============================================
+
+Teacher Pages to Create:
+- frontend/src/pages/teacher/Dashboard.js - CREATE (Teacher overview)
+- frontend/src/pages/teacher/Assignments.js - CREATE (Manage assignments)
+- frontend/src/pages/teacher/CreateAssignment.js - CREATE (Assignment creation)
+- frontend/src/pages/teacher/AssignmentDetail.js - CREATE (Assignment management)
+- frontend/src/pages/teacher/Submissions.js - CREATE (Review submissions)
+- frontend/src/pages/teacher/Grading.js - CREATE (Manual grading interface)
+- frontend/src/pages/teacher/Students.js - CREATE (Student management)
+- frontend/src/pages/teacher/Analytics.js - CREATE (Teaching analytics)
+- frontend/src/pages/teacher/Modules.js - CREATE (Module management)
+- frontend/src/pages/teacher/TestCases.js - CREATE (Test case management)
+
+Teacher Components to Create:
+- frontend/src/components/teacher/AssignmentForm.js - CREATE (Create/edit assignments)
+- frontend/src/components/teacher/TestCaseEditor.js - CREATE (Test case creation)
+- frontend/src/components/teacher/GradingInterface.js - CREATE (Manual grading)
+- frontend/src/components/teacher/SubmissionViewer.js - CREATE (Code review)
+- frontend/src/components/teacher/AnalyticsCharts.js - CREATE (Performance charts)
+- frontend/src/components/teacher/StudentProgress.js - CREATE (Individual student tracking)
+- frontend/src/components/teacher/AssignmentStats.js - CREATE (Assignment statistics)
+- frontend/src/components/teacher/ModuleEnrollment.js - CREATE (Student enrollment)
+
+Teacher Page Features:
+Dashboard:
+- Overview of modules and assignments
+- Recent submission notifications
+- Grading queue status
+- Student performance summaries
+- Quick action buttons
+
+Assignments:
+- List of created assignments
+- Assignment status (draft, published, closed)
+- Quick edit and duplicate options
+- Submission statistics
+- Performance analytics
+
+Create Assignment:
+- Rich text editor for descriptions
+- File upload for resources
+- Test case creation interface
+- Due date and late penalty settings
+- Module assignment
+- Publishing controls
+
+Submissions Review:
+- List of submissions requiring attention
+- Code diff viewer for multiple attempts
+- Side-by-side comparison with test cases
+- Manual override capabilities
+- Bulk grading operations
+- Comment and feedback system
+
+Analytics:
+- Student performance trends
+- Assignment difficulty analysis
+- Module completion rates
+- Grade distribution charts
+- Comparative analytics across modules
+
+STEP 14: ADMIN FRONTEND PAGES & COMPONENTS
+===========================================
+
+Admin Pages to Create:
+- frontend/src/pages/admin/Dashboard.js - CREATE (System overview)
+- frontend/src/pages/admin/Institutions.js - CREATE (Institution management)
+- frontend/src/pages/admin/Departments.js - CREATE (Department management)
+- frontend/src/pages/admin/Users.js - CREATE (User management)
+- frontend/src/pages/admin/Analytics.js - CREATE (System analytics)
+- frontend/src/pages/admin/Settings.js - CREATE (System settings)
+- frontend/src/pages/admin/Reports.js - CREATE (Generate reports)
+- frontend/src/pages/admin/AuditLog.js - CREATE (Activity monitoring)
+
+Admin Components to Create:
+- frontend/src/components/admin/InstitutionForm.js - CREATE (Institution CRUD)
+- frontend/src/components/admin/DepartmentForm.js - CREATE (Department CRUD)
+- frontend/src/components/admin/UserManagement.js - CREATE (User CRUD)
+- frontend/src/components/admin/SystemMetrics.js - CREATE (System performance)
+- frontend/src/components/admin/ReportGenerator.js - CREATE (Custom reports)
+- frontend/src/components/admin/ActivityFeed.js - CREATE (Real-time activity)
+
+Admin Page Features:
+Dashboard:
+- System-wide statistics
+- Active users and sessions
+- Performance metrics
+- Recent system activities
+- Alert notifications
+
+Institution Management:
+- CRUD operations for institutions
+- Department associations
+- User statistics per institution
+- Institution-specific settings
+
+User Management:
+- List all users (students, teachers, admins)
+- User role management
+- Account activation/deactivation
+- Password reset capabilities
+- Bulk user operations
+
+System Analytics:
+- Usage statistics
+- Performance monitoring
+- Error tracking
+- Security audit logs
+- Capacity planning metrics
+
+STEP 15: UI/UX OPTIMIZATION & ADVANCED FEATURES
+================================================
+
+UI/UX Enhancements to Implement:
+
+1. RESPONSIVE DESIGN
+Files to Create/Modify:
+- frontend/src/styles/responsive.css - CREATE (Mobile-first design)
+- All component CSS files - ENHANCE (Mobile compatibility)
+
+Features:
+- Mobile-first responsive design
+- Tablet and desktop optimizations
+- Touch-friendly interfaces
+- Adaptive navigation menus
+- Responsive data tables
+
+2. ACCESSIBILITY (WCAG 2.1 AA COMPLIANCE)
+Files to Create:
+- frontend/src/utils/accessibility.js - CREATE (A11y utilities)
+- frontend/src/components/common/SkipLink.js - CREATE (Skip navigation)
+
+Features:
+- Keyboard navigation support
+- Screen reader compatibility
+- High contrast mode
+- Focus management
+- ARIA labels and descriptions
+- Color blind friendly palettes
+
+3. DARK MODE SUPPORT
+Files to Create:
+- frontend/src/context/ThemeContext.js - CREATE (Theme management)
+- frontend/src/styles/themes.css - CREATE (Light/dark themes)
+
+Features:
+- Toggle between light and dark modes
+- System preference detection
+- Persistent theme selection
+- Smooth theme transitions
+
+4. REAL-TIME FEATURES (WEBSOCKET INTEGRATION)
+Files to Create:
+- frontend/src/services/websocketService.js - CREATE (WebSocket client)
+- frontend/src/hooks/useWebSocket.js - CREATE (WebSocket hook)
+- frontend/src/components/common/LiveNotifications.js - CREATE (Real-time alerts)
+
+Features:
+- Real-time submission status updates
+- Live grading notifications
+- Assignment publication alerts
+- Chat/messaging system
+- Live submission queue updates
+
+5. ADVANCED CODE EDITOR
+Files to Create:
+- frontend/src/components/common/CodeEditor.js - ENHANCE (Advanced editor)
+- frontend/src/utils/codeValidation.js - CREATE (Syntax validation)
+
+Features:
+- Syntax highlighting for multiple languages
+- Error detection and highlighting
+- Auto-completion
+- Code formatting
+- Line numbers and code folding
+- Theme support
+- Collaborative editing (future)
+
+6. PERFORMANCE OPTIMIZATION
+Files to Create:
+- frontend/src/utils/performance.js - CREATE (Performance utilities)
+- frontend/src/hooks/useInfiniteScroll.js - CREATE (Pagination optimization)
+
+Features:
+- Lazy loading of components
+- Infinite scrolling for large datasets
+- Image optimization
+- Bundle splitting
+- Caching strategies
+- Service worker implementation
+
+7. ANIMATION & MICRO-INTERACTIONS
+Files to Create:
+- frontend/src/styles/animations.css - CREATE (CSS animations)
+- frontend/src/components/common/LoadingSpinner.js - CREATE (Custom loading)
+
+Features:
+- Smooth page transitions
+- Loading animations
+- Hover effects
+- Form validation animations
+- Success/error state animations
+- Progress indicators
+
+STEP 16: FRONTEND-BACKEND INTEGRATION
+=====================================
+
+Files to Create:
+- frontend/src/services/apiClient.js - CREATE (Axios configuration)
+- frontend/src/services/endpoints.js - CREATE (API endpoint definitions)
+- frontend/src/hooks/useApi.js - CREATE (API hook utilities)
+- frontend/src/utils/errorHandling.js - CREATE (Error management)
+
+API Integration Services to Create:
+- frontend/src/services/authService.js - CREATE (Authentication API)
+- frontend/src/services/assignmentService.js - CREATE (Assignment API)
+- frontend/src/services/submissionService.js - CREATE (Submission API)
+- frontend/src/services/fileService.js - CREATE (File upload/download API)
+- frontend/src/services/gradeService.js - CREATE (Grading API)
+- frontend/src/services/analyticsService.js - CREATE (Analytics API)
+
+Integration Features:
+- Centralized API client with interceptors
+- JWT token automatic attachment
+- Request/response logging
+- Error handling and retry logic
+- Loading state management
+- Offline functionality
+- API response caching
+
+API Integration Testing:
+- Unit tests for API services
+- Integration tests for data flows
+- Mock API for development
+- Error scenario testing
+- Performance testing
+
+STEP 17: FULL-STACK INTEGRATION & TESTING
+==========================================
+
+Development Environment Setup:
+Files to Create:
+- docker-compose.yml - CREATE (Multi-container setup)
+- package.json (root) - CREATE (Concurrent server scripts)
+- frontend/proxy.config.js - CREATE (Development proxy)
+
+Scripts to Create:
+Root package.json scripts:
+{
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && python app/app.py",
+    "dev:frontend": "cd frontend && npm start",
+    "build": "cd frontend && npm run build",
+    "test": "concurrently \"npm run test:backend\" \"npm run test:frontend\"",
+    "test:backend": "cd backend && python -m pytest",
+    "test:frontend": "cd frontend && npm test"
+  }
+}
+
+Development Features:
+- Single command to start both servers
+- Hot reload for both frontend and backend
+- Shared environment variables
+- Automatic browser opening
+- Error overlay for development
+- API proxy configuration
+
+Testing Framework:
+Backend Testing Files to Create:
+- backend/tests/__init__.py - CREATE
+- backend/tests/test_auth.py - CREATE (Authentication tests)
+- backend/tests/test_assignments.py - CREATE (Assignment tests)
+- backend/tests/test_submissions.py - CREATE (Submission tests)
+- backend/tests/test_automarker.py - CREATE (AutoMarker tests)
+- backend/pytest.ini - CREATE (Test configuration)
+
+Frontend Testing Files to Create:
+- frontend/src/__tests__/components/ - CREATE (Component tests)
+- frontend/src/__tests__/pages/ - CREATE (Page tests)
+- frontend/src/__tests__/services/ - CREATE (Service tests)
+- frontend/src/__tests__/utils/ - CREATE (Utility tests)
+- frontend/src/setupTests.js - CREATE (Test setup)
+
+Integration Testing:
+- End-to-end tests with Cypress/Playwright
+- API integration tests
+- Authentication flow tests
+- File upload/download tests
+- Real-time feature tests
+
+STEP 18: DEPLOYMENT & PRODUCTION SETUP
+=======================================
+
+Production Configuration Files:
+- Dockerfile.backend - CREATE (Backend containerization)
+- Dockerfile.frontend - CREATE (Frontend containerization)
+- docker-compose.prod.yml - CREATE (Production containers)
+- nginx.conf - CREATE (Reverse proxy configuration)
+- .env.production - CREATE (Production environment variables)
+
+CI/CD Pipeline:
+- .github/workflows/ci.yml - CREATE (GitHub Actions)
+- .github/workflows/deploy.yml - CREATE (Deployment automation)
+
+Production Features:
+- SSL/TLS configuration
+- Database backup automation
+- Log aggregation and monitoring
+- Health checks and monitoring
+- Auto-scaling configuration
+- Security hardening
+
+Environment Management:
+- Development environment
+- Staging environment
+- Production environment
+- Environment-specific configurations
+- Secret management
+
+STEP 19: CLEANUP & OPTIMIZATION
+================================
+
+Files to Remove:
+- backend/database.py - REMOVE (Old raw SQL approach)
+- Any unused CSS files
+- Commented-out code
+- Development-only dependencies
+- Temporary testing files
+
+Code Cleanup Tasks:
+- Remove all raw SQL references
+- Consolidate duplicate utility functions
+- Optimize database queries
+- Minimize bundle sizes
+- Remove unused imports
+- Update documentation
+
+Performance Optimization:
+- Database query optimization
+- Frontend bundle optimization
+- Image compression
+- Caching strategies
+- CDN setup for static assets
+
+Security Audit:
+- Dependency vulnerability scanning
+- Security header configuration
+- Input validation review
+- Authentication security review
+- File upload security review
+
+STEP 20: DOCUMENTATION & FINAL TESTING
+=======================================
+
+Documentation Files to Create:
+- README.md - ENHANCE (Comprehensive setup guide)
+- docs/API_DOCUMENTATION.md - CREATE (API reference)
+- docs/USER_GUIDE.md - CREATE (User manual)
+- docs/DEVELOPER_GUIDE.md - CREATE (Development guide)
+- docs/DEPLOYMENT_GUIDE.md - CREATE (Deployment instructions)
+- docs/ARCHITECTURE.md - CREATE (System architecture)
+- docs/DATABASE_SCHEMA.md - CREATE (Database documentation)
+
+User Documentation:
+- Student user guide
+- Teacher user guide
+- Admin user guide
+- Installation instructions
+- Troubleshooting guide
+- FAQ section
+
+Developer Documentation:
+- API documentation with examples
+- Code style guidelines
+- Contributing guidelines
+- Testing procedures
+- Deployment procedures
+- Architecture decisions
+
+Final Testing Checklist:
+- All user workflows tested
+- Cross-browser compatibility
+- Mobile responsiveness
+- Performance benchmarks
+- Security testing
+- Accessibility testing
+- Load testing
+- Backup and recovery testing
+
+================================================================================
+COMPLETE PROJECT STRUCTURE
+================================================================================
+
+Final Project Structure:
+csrs-automated-assessment/
+├── backend/
+│   ├── app/
+│   │   ├── blueprints/
+│   │   │   ├── __init__.py
+│   │   │   ├── auth.py
+│   │   │   ├── assignments.py
+│   │   │   ├── submissions.py ✅
+│   │   │   ├── files.py
+│   │   │   ├── tests.py
+│   │   │   ├── academic.py
+│   │   │   ├── teachers.py
+│   │   │   ├── analytics.py
+│   │   │   └── institutions.py
+│   │   ├── models/
+│   │   │   └── models.py ✅
+│   │   ├── utils/
+│   │   │   ├── validators.py
+│   │   │   ├── decorators.py
+│   │   │   └── responses.py
+│   │   ├── security/
+│   │   │   ├── file_validation.py
+│   │   │   └── code_sanitization.py
+│   │   ├── automarker.py
+│   │   ├── app.py ✅
+│   │   └── config.py
+│   ├── tests/
+│   │   ├── test_auth.py
+│   │   ├── test_assignments.py
+│   │   ├── test_submissions.py
+│   │   └── test_automarker.py
+│   ├── requirements.txt
+│   └── pytest.ini
+├── frontend/
+│   ├── public/
+│   │   └── index.html
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── common/
+│   │   │   ├── student/
+│   │   │   ├── teacher/
+│   │   │   └── admin/
+│   │   ├── pages/
+│   │   │   ├── student/
+│   │   │   ├── teacher/
+│   │   │   └── admin/
+│   │   ├── services/
+│   │   ├── hooks/
+│   │   ├── context/
+│   │   ├── utils/
+│   │   ├── styles/
+│   │   ├── __tests__/
+│   │   ├── App.js
+│   │   └── index.js
+│   ├── package.json
+│   └── .env
+├── docs/
+│   ├── API_DOCUMENTATION.md
+│   ├── USER_GUIDE.md
+│   ├── DEVELOPER_GUIDE.md
+│   └── DEPLOYMENT_GUIDE.md
+├── docker-compose.yml
+├── package.json (root)
+├── README.md
+└── PROJECT_PLAN_COMPLETE.txt ✅
+
+================================================================================
+SUCCESS METRICS
+================================================================================
+
+Technical Success Criteria:
+- All 60+ API endpoints functional
+- Frontend responsive on all devices
+- Page load times under 2 seconds
+- 95%+ uptime in production
+- Zero security vulnerabilities
+- Full test coverage (>80%)
+
+User Experience Success Criteria:
+- Students can submit assignments in under 30 seconds
+- Teachers can grade submissions efficiently
+- Automated grading provides immediate feedback
+- System handles 100+ concurrent users
+- Intuitive navigation requiring minimal training
+
+Business Success Criteria:
+- Reduces manual grading time by 80%
+- Provides instant feedback to students
+- Comprehensive analytics for academic improvement
+- Scalable to multiple institutions
+- Production-ready with proper documentation
+
+================================================================================
+CURRENT STATUS SUMMARY
+================================================================================
+
+✅ COMPLETED (Steps 1-3):
+- Backend database models with UK academic structure
+- Basic API foundation with submissions
+- SQLAlchemy integration
+
+🔄 IN PROGRESS (Step 4):
+- AutoMarker SQLAlchemy integration
+
+📅 IMMEDIATE NEXT (Steps 4-8):
+- Authentication system
+- Complete backend API
+- AutoMarker enhancement
+
+📅 UPCOMING (Steps 10-14):
+- React frontend development
+- UI/UX optimization
+- Frontend-backend integration
+
+📅 FINAL (Steps 17-20):
+- Full-stack integration
+- Testing and deployment
+- Documentation and cleanup
+
+TOTAL ESTIMATED TIMELINE: 8-12 weeks
+- Backend completion: 3-4 weeks
+- Frontend development: 4-5 weeks  
+- Integration and testing: 1-2 weeks
+- Deployment and documentation: 1 week
+
+================================================================================
+END OF COMPLETE PROJECT PLAN
+================================================================================
