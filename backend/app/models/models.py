@@ -33,7 +33,11 @@ class TeacherRole(Enum):
 class SubmissionStatus(Enum):
     SUBMITTED = "submitted"
     PROCESSING = "processing"
+    GRADING = "grading"
     GRADED = "graded"
+    PASSED = "passed"
+    PARTIAL = "partial"
+    FAILED = "failed"
     ERROR = "error"
     LATE = "late"
 

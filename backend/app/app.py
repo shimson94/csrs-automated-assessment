@@ -188,6 +188,153 @@ def create_sample_data():
         
         db.session.flush()
         
+        # Add test file content to tests
+        if len(tests) >= 3:
+            # Test 1: Basic Addition Test - Tests student's add_numbers function
+            tests[0].test_file = """import unittest
+import sys
+import os
+import tempfile
+import subprocess
+
+class TestAddition(unittest.TestCase):
+    def setUp(self):
+        # This will be set by the automarker
+        self.student_file = None
+        
+    def test_addition_basic(self):
+        # Test basic addition by running student code
+        try:
+            # Test with inputs 2 and 3, expected output is 5
+            result = subprocess.run(
+                ['python', self.student_file] if self.student_file else ['python', '-c', 'print(5)'],
+                input='2\\n3\\n',
+                text=True,
+                capture_output=True,
+                timeout=5
+            )
+            
+            if result.returncode == 0:
+                output = result.stdout.strip()
+                # Check if output contains 5 (the sum of 2 + 3)
+                self.assertIn('5', output, f"Expected output to contain '5', got: '{output}'")
+            else:
+                self.fail(f"Student code failed to run: {result.stderr}")
+                
+        except subprocess.TimeoutExpired:
+            self.fail("Student code timed out")
+        except Exception as e:
+            self.fail(f"Error running student code: {str(e)}")
+
+if __name__ == '__main__':
+    unittest.main()
+""".strip().encode('utf-8')
+            
+            # Test 2: String Operations Test - Tests input/output behavior
+            tests[1].test_file = """import unittest
+import sys
+import os
+import subprocess
+
+class TestStringOperations(unittest.TestCase):
+    def setUp(self):
+        self.student_file = None
+        
+    def test_string_operations(self):
+        # Test string input/output
+        try:
+            test_input = "Hello World"
+            result = subprocess.run(
+                ['python', self.student_file] if self.student_file else ['python', '-c', f'print("{test_input}")'],
+                input=test_input + '\\n',
+                text=True,
+                capture_output=True,
+                timeout=5
+            )
+            
+            if result.returncode == 0:
+                output = result.stdout.strip()
+                # Check if output matches input
+                self.assertEqual(output, test_input, f"Expected '{test_input}', got: '{output}'")
+            else:
+                self.fail(f"Student code failed to run: {result.stderr}")
+                
+        except subprocess.TimeoutExpired:
+            self.fail("Student code timed out")
+        except Exception as e:
+            self.fail(f"Error running student code: {str(e)}")
+
+if __name__ == '__main__':
+    unittest.main()
+""".strip().encode('utf-8')
+            
+            # Test 3: Loop Implementation Test - Tests loop output
+            tests[2].test_file = """import unittest
+import sys
+import os
+import subprocess
+
+class TestLoops(unittest.TestCase):
+    def setUp(self):
+        self.student_file = None
+        
+    def test_loop_functionality(self):
+        # Test loop with input 5, should output 0,1,2,3,4
+        try:
+            result = subprocess.run(
+                ['python', self.student_file] if self.student_file else ['python', '-c', 'for i in range(5): print(i)'],
+                input='5\\n',
+                text=True,
+                capture_output=True,
+                timeout=5
+            )
+            
+            if result.returncode == 0:
+                output = result.stdout.strip()
+                expected_lines = ['0', '1', '2', '3', '4']
+                output_lines = output.split('\\n')
+                
+                # Check if output contains the expected sequence
+                for expected in expected_lines:
+                    self.assertIn(expected, output_lines, f"Expected to find '{expected}' in output: {output_lines}")
+            else:
+                self.fail(f"Student code failed to run: {result.stderr}")
+                
+        except subprocess.TimeoutExpired:
+            self.fail("Student code timed out")
+        except Exception as e:
+            self.fail(f"Error running student code: {str(e)}")
+    
+    def test_range_loop(self):
+        # Test with input 3, should output 0,1,2
+        try:
+            result = subprocess.run(
+                ['python', self.student_file] if self.student_file else ['python', '-c', 'for i in range(3): print(i)'],
+                input='3\\n',
+                text=True,
+                capture_output=True,
+                timeout=5
+            )
+            
+            if result.returncode == 0:
+                output = result.stdout.strip()
+                expected_lines = ['0', '1', '2']
+                output_lines = output.split('\\n')
+                
+                for expected in expected_lines:
+                    self.assertIn(expected, output_lines, f"Expected to find '{expected}' in output: {output_lines}")
+            else:
+                self.fail(f"Student code failed to run: {result.stderr}")
+                
+        except subprocess.TimeoutExpired:
+            self.fail("Student code timed out")
+        except Exception as e:
+            self.fail(f"Error running student code: {str(e)}")
+
+if __name__ == '__main__':
+    unittest.main()
+""".strip().encode('utf-8')
+        
         # Create sample assignments
         assignments = []
         assignment_data = [

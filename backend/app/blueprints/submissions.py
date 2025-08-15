@@ -269,7 +269,24 @@ def get_results():
         query = Result.query
         
         if submission_id:
-            query = query.filter_by(submission_id=submission_id)
+            # Find the result_id for the given submission_id first
+            submission = Submission.query.filter_by(submission_id=submission_id).first()
+            if submission and submission.result_id:
+                query = query.filter(Result.result_id == submission.result_id)
+            else:
+                # No results for this submission_id
+                return jsonify({
+                    "results": [],
+                    "pagination": {
+                        "page": page,
+                        "per_page": per_page,
+                        "total": 0,
+                        "pages": 0,
+                        "has_next": False,
+                        "has_prev": False
+                    }
+                }), 200
+                
         if grade_status:
             try:
                 status_enum = GradeStatus(grade_status)
@@ -291,12 +308,15 @@ def get_results():
         results_data = []
         for result in results_query.items:
             result_dict = result.to_dict()
-            # Add submission info
-            if result.submission:
+            # Add submission info by finding the submission that references this result
+            submission = Submission.query.filter_by(result_id=result.result_id).first()
+            if submission:
                 result_dict['submission'] = {
-                    'submission_id': result.submission.submission_id,
-                    'student_id': result.submission.student_id,
-                    'assignment_id': result.submission.assignment_id
+                    'submission_id': submission.submission_id,
+                    'student_id': submission.student_id,
+                    'assignment_id': submission.assignment_id,
+                    'file_name': submission.file_name,
+                    'submission_date': submission.submission_date.isoformat() if submission.submission_date else None
                 }
             results_data.append(result_dict)
         
@@ -346,61 +366,64 @@ def grade_submission(submission_id):
             return error_response("No test found for this assignment", 404)
         
         # Check if already graded
-        if submission.result:
+        if submission.result and submission.result.grade_status == GradeStatus.GRADED:
             return error_response("Submission already graded. Use PUT to re-grade.")
         
-        # Update submission status to processing
-        submission.status = SubmissionStatus.PROCESSING
+        # Check if submission has required files
+        if not submission.submission_file:
+            return error_response("No submission file found to grade")
+        
+        # Get associated assignment and test
+        assignment = submission.assignment
+        if not assignment:
+            return error_response("Assignment not found", 404)
+        
+        if not assignment.test or not assignment.test.test_file:
+            return error_response("No test file found for this assignment", 404)
+        
+        # Update submission status to grading
+        submission.status = SubmissionStatus.GRADING
         db.session.commit()
         
-        # Initialize AutoMarker
+        # Initialize AutoMarker and run grading
         automarker = AutoMarker()
         
-        # Decode file content
-        file_content = submission.submission_file.decode('utf-8') if submission.submission_file else ""
+        current_app.logger.info(f"Starting automated grading for submission {submission_id}")
         
-        # Run automated grading
-        grading_result = automarker.mark_submission(
-            submission_code=file_content,
-            expected_output=test.expected_output,
-            test_input=test.input_data,
-            timeout_seconds=test.timeout_seconds
-        )
+        # Run the automarker (this now handles everything internally)
+        grading_result = automarker.mark_submission(submission_id)
         
-        # Create result record
-        result = Result(
-            actual_output=grading_result.get('actual_output', ''),
-            expected_output=test.expected_output,
-            passed=grading_result.get('passed', False),
-            score=grading_result.get('score', 0.0),
-            percentage=grading_result.get('percentage', 0.0),
-            execution_time=grading_result.get('execution_time', 0.0),
-            feedback=grading_result.get('feedback', ''),
-            feedback_summary=grading_result.get('feedback_summary', ''),
-            test_cases_passed=grading_result.get('test_cases_passed', 0),
-            test_cases_total=grading_result.get('test_cases_total', 1),
-            error_message=grading_result.get('error_message'),
-            grade_status=GradeStatus.GRADED,
-            graded_at=datetime.now(timezone.utc),
-            graded_by="AUTOMARKER"
-        )
-        
-        # Link result to submission
-        db.session.add(result)
-        db.session.flush()  # Get the result ID
-        
-        # Update submission status and link result
-        submission.status = SubmissionStatus.GRADED
-        submission.result_id = result.result_id
-        
-        db.session.commit()
-        
-        current_app.logger.info(f"Submission {submission_id} graded successfully. Score: {result.score}")
-        
-        return success_response({
-            "submission": submission.to_dict(),
-            "result": result.to_dict()
-        }, "Submission graded successfully")
+        if grading_result.get('success', False):
+            current_app.logger.info(f"Submission {submission_id} graded successfully. Score: {grading_result.get('score', 0)}")
+            
+            # Refresh submission to get updated result
+            db.session.refresh(submission)
+            
+            return success_response({
+                "submission": submission.to_dict(),
+                "result": submission.result.to_dict() if submission.result else None,
+                "grading_details": {
+                    "score": grading_result.get('score', 0),
+                    "percentage": grading_result.get('percentage', 0),
+                    "max_score": grading_result.get('max_score', 0),
+                    "tests_total": grading_result.get('tests_total', 0),
+                    "tests_passed": grading_result.get('tests_passed', 0),
+                    "tests_failed": grading_result.get('tests_failed', 0),
+                    "tests_errors": grading_result.get('tests_errors', 0),
+                    "status": grading_result.get('status', 'unknown')
+                }
+            }, "Submission graded successfully")
+        else:
+            # Grading failed
+            current_app.logger.error(f"Grading failed for submission {submission_id}: {grading_result.get('error', 'Unknown error')}")
+            
+            # Refresh submission to get updated status
+            db.session.refresh(submission)
+            
+            return error_response(
+                f"Grading failed: {grading_result.get('error', 'Unknown error')}", 
+                500
+            )
         
     except SQLAlchemyError as e:
         db.session.rollback()
@@ -420,17 +443,49 @@ def regrade_submission(submission_id):
         if not submission:
             return error_response("Submission not found", 404)
         
+        current_app.logger.info(f"Re-grading submission {submission_id}")
+        
         # Delete existing result if present
         if submission.result:
             db.session.delete(submission.result)
+            submission.result_id = None
         
         # Reset submission status
         submission.status = SubmissionStatus.SUBMITTED
-        submission.result_id = None
         db.session.commit()
         
-        # Now call the grade endpoint logic
-        return grade_submission(submission_id)
+        # Initialize AutoMarker and run grading
+        automarker = AutoMarker()
+        grading_result = automarker.mark_submission(submission_id)
+        
+        if grading_result.get('success', False):
+            current_app.logger.info(f"Submission {submission_id} re-graded successfully. Score: {grading_result.get('score', 0)}")
+            
+            # Refresh submission to get updated result
+            db.session.refresh(submission)
+            
+            return success_response({
+                "submission": submission.to_dict(),
+                "result": submission.result.to_dict() if submission.result else None,
+                "grading_details": {
+                    "score": grading_result.get('score', 0),
+                    "percentage": grading_result.get('percentage', 0),
+                    "max_score": grading_result.get('max_score', 0),
+                    "tests_total": grading_result.get('tests_total', 0),
+                    "tests_passed": grading_result.get('tests_passed', 0),
+                    "tests_failed": grading_result.get('tests_failed', 0),
+                    "tests_errors": grading_result.get('tests_errors', 0),
+                    "status": grading_result.get('status', 'unknown')
+                }
+            }, "Submission re-graded successfully")
+        else:
+            # Re-grading failed
+            current_app.logger.error(f"Re-grading failed for submission {submission_id}: {grading_result.get('error', 'Unknown error')}")
+            
+            return error_response(
+                f"Re-grading failed: {grading_result.get('error', 'Unknown error')}", 
+                500
+            )
         
     except SQLAlchemyError as e:
         db.session.rollback()
